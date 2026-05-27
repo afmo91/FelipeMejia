@@ -1,0 +1,20 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}"],
+  theme: {
+    extend: {
+      colors: {
+        bg: "#07070b",
+        fg: "#f3f4f6",
+        accent: "#8b5cf6",
+        accent2: "#22d3ee"
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"]
+      }
+    }
+  },
+  plugins: [require("@tailwindcss/typography")],
+};
+export default config;
