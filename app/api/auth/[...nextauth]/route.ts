@@ -6,8 +6,14 @@ const handler = NextAuth({
     name: "Credentials",
     credentials: { username: { label: "Username", type: "text" }, password: { label: "Password", type: "password" } },
     async authorize(credentials) {
-      if (credentials?.username === process.env.AUTH_USERNAME && credentials?.password === process.env.AUTH_PASSWORD) {
-        return { id: "1", name: credentials.username };
+      if (!credentials) {
+        return null;
+      }
+
+      const { username, password } = credentials;
+
+      if (username === process.env.AUTH_USERNAME && password === process.env.AUTH_PASSWORD) {
+        return { id: "1", name: username };
       }
       return null;
     }
