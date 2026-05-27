@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body {
+  @apply bg-bg text-fg antialiased;
+}
+.section {
+  @apply w-full px-6 py-20 md:px-12 lg:px-24;
+}
+.nav-link {
+  @apply relative text-sm uppercase tracking-wide text-gray-300 transition;
+}
+.nav-link::after {
+  content: "";
+  @apply absolute left-0 -bottom-1 h-0.5 w-0 bg-accent transition-all duration-300;
+}
+.nav-link:hover::after, .nav-link:focus-visible::after { @apply w-full; }
