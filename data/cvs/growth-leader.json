@@ -1,1 +1,33 @@
-{"slug":"growth-leader","title":"Growth Leader CV","summary":"Growth executive focused on compounding channels and lifecycle automation.","experience":[{"role":"Head of Growth","company":"Growth Labs","period":"2020-2026","highlights":["Doubled pipeline","Lifted retention by 18%"]}],"skills":["Growth Strategy","Lifecycle","Pricing"],"tools":["HubSpot","GA4","SQL"]}
+{
+  "title": "Growth Leader CV",
+  "summary": "Growth leader with a product builder mindset. I combine experimentation, funnel optimization, pricing tests, and analytics instrumentation to drive measurable results while working closely with product and engineering.",
+  "experience": [
+    {
+      "role": "Growth Product Manager",
+      "company": "Adamo Telecom",
+      "bullets": [
+        "Built an experimentation program across acquisition, onboarding, and retention",
+        "Improved conversion by 25% and reduced CAC by 30%",
+        "Created an attribution framework recovering €200K+ and informing weekly C-level decisions",
+        "Owned €3M+ budget across Google Ads, Meta Ads, and programmatic"
+      ]
+    },
+    {
+      "role": "Product Builder",
+      "company": "Spotz.pro",
+      "bullets": [
+        "Shipped an analytics + workflow platform for multi-channel advertising",
+        "Led discovery/prioritization; tested monetization; instrumented lifecycle metrics",
+        "Delivered end-to-end: specs, API integration, QA, releases"
+      ]
+    }
+  ],
+  "skills": [
+    "Growth experimentation & funnels",
+    "Pricing tests & monetization",
+    "Attribution & dashboards",
+    "Product-led growth",
+    "Stakeholder management"
+  ],
+  "tools": ["GA4", "Mixpanel", "Tableau", "SQL", "Salesforce", "HubSpot"]
+}

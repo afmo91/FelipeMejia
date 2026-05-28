@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 :root { color-scheme: dark; }
+html {
+  scroll-behavior: smooth;
+}
 body {
   @apply bg-bg text-fg antialiased;
 }
@@ -10,10 +13,25 @@ body {
   @apply w-full px-6 py-20 md:px-12 lg:px-24;
 }
 .nav-link {
-  @apply relative text-sm uppercase tracking-wide text-gray-300 transition;
+  @apply relative w-fit py-1 text-sm text-gray-300 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
 }
 .nav-link::after {
   content: "";
   @apply absolute left-0 -bottom-1 h-0.5 w-0 bg-accent transition-all duration-300;
 }
-.nav-link:hover::after, .nav-link:focus-visible::after { @apply w-full; }
+.nav-link:hover::after, .nav-link:focus-visible::after, .nav-link-active::after { @apply w-full; }
+.nav-link-active {
+  @apply text-white;
+}
+.footer-link {
+  @apply text-gray-300 transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
+}
+.form-label {
+  @apply mb-2 block text-sm text-gray-300;
+}
+.form-field {
+  @apply w-full border border-white/10 bg-black/30 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-accent focus:ring-2 focus:ring-accent/30;
+}
+.button-primary {
+  @apply border border-accent bg-accent px-5 py-3 font-medium text-black transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
+}

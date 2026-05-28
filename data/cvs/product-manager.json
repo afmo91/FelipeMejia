@@ -1,1 +1,34 @@
-{"slug":"product-manager","title":"Product Manager CV","summary":"Product leader driving AI products and monetization.","experience":[{"role":"Senior Product Manager","company":"AdTech Co","period":"2021-2026","highlights":["Scaled AI ads platform","Increased ROAS by 34%"]}],"skills":["Roadmapping","Experimentation","GTM"],"tools":["Looker","Amplitude","Figma"]}
+{
+  "title": "Product Manager CV",
+  "summary": "0→1 product builder with 12+ years of experience shipping and scaling products across telecom, e-commerce, and B2B SaaS. I bring AI/product strategy, discovery, prioritization, and strong analytics + observability practices.",
+  "experience": [
+    {
+      "role": "Product Builder",
+      "company": "Spotz.pro",
+      "bullets": [
+        "Defined vision/roadmap for an AI-powered platform across Google, Meta, LinkedIn, TikTok, X, Pinterest",
+        "Built a unified analytics + workflow dashboard with observability for cross-channel performance",
+        "Tested freemium + usage pricing; instrumented lifecycle metrics and iterated on activation/retention",
+        "Led end-to-end delivery: specs, alignment, API integrations, QA, releases"
+      ]
+    },
+    {
+      "role": "Growth Product Manager",
+      "company": "Adamo Telecom",
+      "bullets": [
+        "Unified customer data across Salesforce + marketing stack for full-funnel visibility",
+        "Digitized onboarding and reduced activation time from 5 days to same-day",
+        "Introduced attribution modeling and recovered €200K+ in wasted spend",
+        "Ran experiments improving conversion by 25% and reducing CAC by 30%; dashboards used weekly by C-level"
+      ]
+    }
+  ],
+  "skills": [
+    "AI product strategy",
+    "Discovery & prioritization",
+    "Analytics & observability",
+    "0→1 builder mindset",
+    "Cross-functional leadership"
+  ],
+  "tools": ["GA4", "Mixpanel", "Tableau", "SQL", "Salesforce", "HubSpot"]
+}

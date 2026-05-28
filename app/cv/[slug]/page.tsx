@@ -1,4 +1,79 @@
 import { notFound } from "next/navigation";
-import { getCV } from "@/lib/content";
+import { getCV, getCVSlugs } from "@/lib/content";
+import type { Metadata } from "next";
 
-export default function CVPage({ params }: { params: { slug: string } }) {const cv=getCV(params.slug);if(!cv) return notFound();return <section className="section"><h1 className="text-4xl">{cv.title}</h1><p className="mt-4 text-gray-300">{cv.summary}</p><h2 className="mt-8 text-2xl">Experience</h2>{cv.experience.map((e)=> <article key={e.role} className="mt-4"><h3>{e.role} · {e.company}</h3><p className="text-sm text-gray-400">{e.period}</p><ul className="list-disc pl-6">{e.highlights.map((h)=><li key={h}>{h}</li>)}</ul></article>)}</section>;}
+export function generateStaticParams() {
+  return getCVSlugs().map((slug) => ({ slug }));
+}
+
+export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const cv = getCV(params.slug);
+
+  return {
+    title: cv?.title || "Tailored CV",
+    description: cv?.summary || "Tailored CV for Felipe Mejia.",
+  };
+}
+
+export default function CVPage({ params }: { params: { slug: string } }) {
+  const cv = getCV(params.slug);
+
+  if (!cv) {
+    return notFound();
+  }
+
+  return (
+    <section className="section">
+      <div className="max-w-4xl">
+        <p className="text-sm font-medium text-accent2">Tailored CV</p>
+        <h1 className="mt-4 text-4xl font-semibold text-white md:text-6xl">{cv.title}</h1>
+        <p className="mt-7 text-lg leading-8 text-gray-300">{cv.summary}</p>
+      </div>
+
+      <section className="mt-14" aria-labelledby="cv-experience">
+        <h2 className="text-2xl font-semibold text-white" id="cv-experience">
+          Experience
+        </h2>
+        <div className="mt-6 space-y-9">
+          {cv.experience.map((item) => (
+            <article className="border-t border-white/10 pt-7" key={`${item.role}-${item.company}`}>
+              <h3 className="text-xl font-semibold text-white">
+                {item.role} | {item.company}
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {item.bullets.map((bullet) => (
+                  <li className="border-l border-accent/70 pl-5 leading-7 text-gray-300" key={bullet}>
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-14 grid gap-10 border-y border-white/10 py-10 md:grid-cols-2" aria-label="CV skills and tools">
+        <div>
+          <h2 className="text-2xl font-semibold text-white">Skills</h2>
+          <ul className="mt-5 space-y-3">
+            {cv.skills.map((skill) => (
+              <li className="leading-7 text-gray-300" key={skill}>
+                {skill}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold text-white">Tools</h2>
+          <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-3">
+            {cv.tools.map((tool) => (
+              <li className="text-accent2" key={tool}>
+                {tool}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </section>
+  );
+}

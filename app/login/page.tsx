@@ -1,5 +1,25 @@
-"use client";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import LoginForm from "@/components/LoginForm";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 
-export default function LoginPage(){const [error,setError]=useState("");return <section className="section"><h1 className="text-4xl">Login</h1><form className="mt-8 grid max-w-md gap-4" onSubmit={async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);const res=await signIn("credentials",{username:f.get("username"),password:f.get("password"),redirect:true,callbackUrl:"/cv/product-manager"});if(res?.error) setError("Invalid credentials");}}><input name="username" className="bg-black/40 p-3" placeholder="Username"/><input name="password" type="password" className="bg-black/40 p-3" placeholder="Password"/><button className="bg-accent p-3 text-black">Sign in</button></form>{error && <p>{error}</p>}</section>;}
+export const metadata: Metadata = {
+  title: "Login",
+  description: "Sign in to access tailored CV pages from Felipe Mejia.",
+};
+
+export default function LoginPage() {
+  return (
+    <section className="section">
+      <div className="max-w-3xl">
+        <p className="text-sm font-medium text-accent2">Login</p>
+        <h1 className="mt-4 text-4xl font-semibold text-white md:text-6xl">Protected CV Access</h1>
+        <p className="mt-6 text-lg leading-8 text-gray-300">
+          Tailored CV pages are available after sign-in.
+        </p>
+      </div>
+      <Suspense fallback={<p className="mt-10 text-gray-300">Loading sign-in form...</p>}>
+        <LoginForm />
+      </Suspense>
+    </section>
+  );
+}
