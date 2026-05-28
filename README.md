@@ -18,12 +18,6 @@ npm run lint:cv
 npm run generate:cv-pdfs
 ```
 
-Regenerate the derived 3D portrait data after replacing `public/assets/user.jpg`:
-
-```bash
-npm run generate:portrait
-```
-
 ## Environment Variables
 Create `.env.local`:
 
@@ -36,7 +30,7 @@ AUTH_PASSWORD=securePassword123
 ## Features
 - Next.js 14 App Router + TypeScript
 - Tailwind CSS dark theme
-- Fixed reactive 3D point-cloud portrait from derived portrait data
+- Fixed reactive procedural wireframe bust with mouse and scroll look behavior
 - Blog from markdown
 - Homepage sections for About, Resume, Portfolio, and Contact
 - Interactive resume timeline from structured CV JSON

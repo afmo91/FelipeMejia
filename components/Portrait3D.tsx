@@ -4,52 +4,22 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-type PointCloudData = {
-  positions: Float32Array;
-  colors: Float32Array;
-  sizes: Float32Array;
-};
-
-type PortraitPayload = {
-  positions: number[];
-  colors: number[];
-  sizes: number[];
-};
-
 type PortraitMode = "parallax" | "static" | "touch";
+type Vec3Tuple = [number, number, number];
+type LookTarget = { pitch: number; yaw: number };
 
-const DATA_SRC = "/portrait/points.json";
+const WHITE = "#f7f8ff";
+const CYAN = "#9ff6ff";
+const PURPLE = "#b7a2ff";
+const PINK = "#ff9bcf";
 
-const vertexShader = `
-  attribute vec3 color;
-  attribute float pointSize;
-  varying vec3 vColor;
-
-  void main() {
-    vColor = color;
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = pointSize * (360.0 / max(1.0, -mvPosition.z));
-    gl_Position = projectionMatrix * mvPosition;
-  }
-`;
-
-const fragmentShader = `
-  varying vec3 vColor;
-
-  void main() {
-    vec2 center = gl_PointCoord - vec2(0.5);
-    float distanceFromCenter = length(center);
-    float alpha = smoothstep(0.5, 0.08, distanceFromCenter);
-    gl_FragColor = vec4(vColor, alpha * 0.92);
-  }
-`;
-
-function fract(value: number) {
-  return value - Math.floor(value);
+function clamp(value: number, min = 0, max = 1) {
+  return Math.min(max, Math.max(min, value));
 }
 
-function seededNoise(seed: number) {
-  return fract(Math.sin(seed * 12.9898) * 43758.5453);
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const t = clamp((value - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
 }
 
 function canUseWebGL() {
@@ -62,11 +32,6 @@ function canUseWebGL() {
   } catch {
     return false;
   }
-}
-
-function getScrollProgress() {
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-  return maxScroll > 0 ? THREE.MathUtils.clamp(window.scrollY / maxScroll, 0, 1) : 0;
 }
 
 function usePortraitMode() {
@@ -92,94 +57,235 @@ function usePortraitMode() {
   return mode;
 }
 
-function createFallbackPointCloud(): PointCloudData {
-  const count = 5200;
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  const sizes = new Float32Array(count);
+function getSectionLookTarget(): LookTarget {
+  const sections: { id: string; pitch: number; yaw: number }[] = [
+    { id: "about", pitch: 0.03, yaw: -0.28 },
+    { id: "resume", pitch: -0.06, yaw: -0.43 },
+    { id: "portfolio", pitch: 0.02, yaw: -0.35 },
+    { id: "contact", pitch: -0.09, yaw: -0.49 },
+  ];
 
-  for (let index = 0; index < count; index += 1) {
-    const angle = index * 2.399963229728653;
-    const radius = Math.sqrt(index / count);
-    const offset = index * 3;
-    const faceBias = seededNoise(index + 5);
+  let selected: LookTarget = { pitch: 0.02, yaw: -0.37 };
+  let closest = Number.POSITIVE_INFINITY;
+  const viewportCenter = window.innerHeight * 0.5;
 
-    positions[offset] = Math.cos(angle) * radius * 0.92 + (seededNoise(index + 11) - 0.5) * 0.08;
-    positions[offset + 1] = Math.sin(angle) * radius * 1.3 + (seededNoise(index + 29) - 0.5) * 0.08;
-    positions[offset + 2] = (1 - radius) * 0.75 + Math.sin(index * 0.035) * 0.12;
-    colors[offset] = 0.54 + faceBias * 0.24;
-    colors[offset + 1] = 0.45 + faceBias * 0.28;
-    colors[offset + 2] = 0.96;
-    sizes[index] = 0.016 + faceBias * 0.01;
-  }
-
-  return { positions, colors, sizes };
-}
-
-function usePointCloud() {
-  const [data, setData] = useState<PointCloudData | null>(null);
-  const [webGLSupported, setWebGLSupported] = useState(true);
-
-  useEffect(() => {
-    if (!canUseWebGL()) {
-      setWebGLSupported(false);
+  sections.forEach((section) => {
+    const element = document.getElementById(section.id);
+    if (!element) {
       return;
     }
 
-    let cancelled = false;
+    const rect = element.getBoundingClientRect();
+    const distance = Math.abs(rect.top + rect.height * 0.28 - viewportCenter);
+    if (distance < closest) {
+      closest = distance;
+      selected = { pitch: section.pitch, yaw: section.yaw };
+    }
+  });
 
-    fetch(DATA_SRC)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Portrait data failed to load");
-        }
-
-        return response.json() as Promise<PortraitPayload>;
-      })
-      .then((payload) => {
-        if (cancelled) {
-          return;
-        }
-
-        setData({
-          colors: new Float32Array(payload.colors),
-          positions: new Float32Array(payload.positions),
-          sizes: new Float32Array(payload.sizes),
-        });
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setData(createFallbackPointCloud());
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { data, webGLSupported };
+  return selected;
 }
 
-function Cloud({ data, mode }: { data: PointCloudData; mode: PortraitMode }) {
-  const ref = useRef<THREE.Points>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const scrollRef = useRef(0);
-  const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+function headPoint(v: number, theta: number): THREE.Vector3 {
+  const crossSection = Math.sin(Math.PI * v);
+  const y = 1.14 - v * 2.18;
+  const jawTaper = 1 - smoothstep(0.66, 0.98, v) * 0.34;
+  const crownTaper = 0.75 + smoothstep(0.04, 0.22, v) * 0.25;
+  const cheekPush = 1 + Math.exp(-((v - 0.49) ** 2) / 0.035) * 0.08;
+  const rx = 0.78 * crossSection * jawTaper * crownTaper * cheekPush;
+  const rz = 0.61 * crossSection * (0.82 + 0.18 * jawTaper);
+
+  return new THREE.Vector3(Math.sin(theta) * rx, y, Math.cos(theta) * rz);
+}
+
+function neckPoint(v: number, theta: number): THREE.Vector3 {
+  const y = -0.96 - v * 0.92;
+  const taper = 1 - v * 0.12;
+  return new THREE.Vector3(Math.sin(theta) * 0.31 * taper, y, Math.cos(theta) * 0.25 * taper);
+}
+
+function shoulderPoint(v: number, theta: number): THREE.Vector3 {
+  const y = -1.72 - v * 0.62 + Math.cos(theta) * 0.05;
+  const rx = 0.42 + v * 1.35;
+  const rz = 0.14 + v * 0.3;
+  return new THREE.Vector3(Math.sin(theta) * rx, y, Math.cos(theta) * rz - v * 0.14);
+}
+
+function createBustTopology() {
+  const linePositions: number[] = [];
+  const pointPositions: number[] = [];
+
+  const addSegment = (a: THREE.Vector3, b: THREE.Vector3) => {
+    linePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  };
+
+  const addPoint = (point: THREE.Vector3) => {
+    pointPositions.push(point.x, point.y, point.z);
+  };
+
+  const thetaSegments = 72;
+  const headRows = 44;
+
+  for (let row = 2; row < headRows - 1; row += 1) {
+    const v = row / (headRows - 1);
+    let previous = headPoint(v, -Math.PI);
+    for (let column = 1; column <= thetaSegments; column += 1) {
+      const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
+      const point = headPoint(v, theta);
+      addSegment(previous, point);
+      previous = point;
+      if (column % 2 === 0) {
+        addPoint(point);
+      }
+    }
+  }
+
+  for (let column = 0; column < thetaSegments; column += 4) {
+    const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
+    let previous = headPoint(0.05, theta);
+    for (let row = 3; row < headRows - 2; row += 1) {
+      const point = headPoint(row / (headRows - 1), theta);
+      addSegment(previous, point);
+      previous = point;
+      addPoint(point);
+    }
+  }
+
+  const neckRows = 14;
+  for (let row = 0; row < neckRows; row += 1) {
+    const v = row / (neckRows - 1);
+    let previous = neckPoint(v, -Math.PI);
+    for (let column = 1; column <= thetaSegments; column += 1) {
+      const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
+      const point = neckPoint(v, theta);
+      addSegment(previous, point);
+      previous = point;
+      if (column % 3 === 0) {
+        addPoint(point);
+      }
+    }
+  }
+
+  for (let column = 0; column < thetaSegments; column += 6) {
+    const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
+    let previous = neckPoint(0, theta);
+    for (let row = 1; row < neckRows; row += 1) {
+      const point = neckPoint(row / (neckRows - 1), theta);
+      addSegment(previous, point);
+      previous = point;
+    }
+  }
+
+  const shoulderRows = 12;
+  for (let row = 0; row < shoulderRows; row += 1) {
+    const v = row / (shoulderRows - 1);
+    let previous = shoulderPoint(v, -Math.PI * 0.92);
+    for (let column = 1; column <= thetaSegments; column += 1) {
+      const theta = -Math.PI * 0.92 + (column / thetaSegments) * Math.PI * 1.84;
+      const point = shoulderPoint(v, theta);
+      addSegment(previous, point);
+      previous = point;
+      if (column % 4 === 0) {
+        addPoint(point);
+      }
+    }
+  }
+
+  for (let column = 3; column < thetaSegments - 3; column += 7) {
+    const theta = -Math.PI * 0.82 + (column / thetaSegments) * Math.PI * 1.64;
+    let previous = shoulderPoint(0, theta);
+    for (let row = 1; row < shoulderRows; row += 1) {
+      const point = shoulderPoint(row / (shoulderRows - 1), theta);
+      addSegment(previous, point);
+      previous = point;
+    }
+  }
+
+  return {
+    lines: new Float32Array(linePositions),
+    points: new Float32Array(pointPositions),
+  };
+}
+
+function createBufferGeometry(attribute: Float32Array) {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(attribute, 3));
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function ellipsePoints(
+  center: Vec3Tuple,
+  radiusX: number,
+  radiusY: number,
+  zRadius = 0,
+  start = 0,
+  end = Math.PI * 2,
+  count = 72,
+): Vec3Tuple[] {
+  const points: Vec3Tuple[] = [];
+  for (let index = 0; index <= count; index += 1) {
+    const t = start + (index / count) * (end - start);
+    points.push([
+      center[0] + Math.cos(t) * radiusX,
+      center[1] + Math.sin(t) * radiusY,
+      center[2] + Math.sin(t) * zRadius,
+    ]);
+  }
+  return points;
+}
+
+function earPoints(side: -1 | 1): Vec3Tuple[] {
+  return ellipsePoints([side * 0.72, 0.28, 0.02], 0.06, 0.22, 0.11, -Math.PI * 0.8, Math.PI * 0.8, 44);
+}
+
+function FeatureCurve({
+  color = WHITE,
+  opacity = 0.7,
+  points,
+  radius = 0.008,
+}: {
+  color?: string;
+  opacity?: number;
+  points: Vec3Tuple[];
+  radius?: number;
+}) {
   const geometry = useMemo(() => {
-    const nextGeometry = new THREE.BufferGeometry();
-    nextGeometry.setAttribute("position", new THREE.BufferAttribute(data.positions, 3));
-    nextGeometry.setAttribute("color", new THREE.BufferAttribute(data.colors, 3));
-    nextGeometry.setAttribute("pointSize", new THREE.BufferAttribute(data.sizes, 1));
-    nextGeometry.computeBoundingSphere();
-    return nextGeometry;
-  }, [data]);
+    const curve = new THREE.CatmullRomCurve3(points.map((point) => new THREE.Vector3(...point)));
+    return new THREE.TubeGeometry(curve, Math.max(24, points.length * 3), radius, 8, false);
+  }, [points, radius]);
+
+  useEffect(() => {
+    return () => geometry.dispose();
+  }, [geometry]);
+
+  return (
+    <mesh geometry={geometry}>
+      <meshBasicMaterial
+        blending={THREE.AdditiveBlending}
+        color={color}
+        depthWrite={false}
+        opacity={opacity}
+        transparent
+      />
+    </mesh>
+  );
+}
+
+function Bust({ mode }: { mode: PortraitMode }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const sectionRef = useRef<LookTarget>({ pitch: 0.02, yaw: -0.37 });
+  const topology = useMemo(() => createBustTopology(), []);
+  const lineGeometry = useMemo(() => createBufferGeometry(topology.lines), [topology.lines]);
+  const pointGeometry = useMemo(() => createBufferGeometry(topology.points), [topology.points]);
 
   useEffect(() => {
     return () => {
-      geometry.dispose();
+      lineGeometry.dispose();
+      pointGeometry.dispose();
     };
-  }, [geometry]);
+  }, [lineGeometry, pointGeometry]);
 
   useEffect(() => {
     let frame = 0;
@@ -211,40 +317,102 @@ function Cloud({ data, mode }: { data: PointCloudData; mode: PortraitMode }) {
     };
   }, [mode]);
 
+  useEffect(() => {
+    let frame = 0;
+
+    function updateSectionTarget() {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        sectionRef.current = getSectionLookTarget();
+        frame = 0;
+      });
+    }
+
+    updateSectionTarget();
+    window.addEventListener("scroll", updateSectionTarget, { passive: true });
+    window.addEventListener("resize", updateSectionTarget);
+    return () => {
+      window.removeEventListener("scroll", updateSectionTarget);
+      window.removeEventListener("resize", updateSectionTarget);
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
+  }, []);
+
   useFrame((state) => {
-    if (!ref.current || !groupRef.current) {
+    if (!groupRef.current) {
       return;
     }
 
-    const scroll = mode === "static" ? 0 : getScrollProgress();
     const pointer = pointerRef.current;
-    pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.045);
-    pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.045);
-    scrollRef.current = THREE.MathUtils.lerp(scrollRef.current, scroll, 0.055);
+    pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.055);
+    pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.055);
+
+    const active = mode === "static" ? { pitch: 0.02, yaw: -0.34 } : sectionRef.current;
+    const targetYaw = active.yaw + pointer.x * 0.17;
+    const targetPitch = active.pitch - pointer.y * 0.1;
     const elapsed = state.clock.elapsedTime;
 
-    groupRef.current.rotation.y = elapsed * 0.025 + scrollRef.current * 0.55 + pointer.x * 0.18;
-    groupRef.current.rotation.x = Math.sin(elapsed * 0.16) * 0.04 - scrollRef.current * 0.14 - pointer.y * 0.12;
-    groupRef.current.scale.z = 1.06 + scrollRef.current * 0.62 + Math.sin(elapsed * 0.34) * 0.02;
-    groupRef.current.position.x = pointer.x * 0.08;
-    groupRef.current.position.y = -pointer.y * 0.06;
-    ref.current.rotation.z = Math.sin(elapsed * 0.12) * 0.025 + pointer.x * 0.018;
-    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.13, 0.025);
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.1, 0.025);
-    state.camera.lookAt(0, 0, 0);
+    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetYaw, 0.055);
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetPitch, 0.055);
+    groupRef.current.rotation.z = Math.sin(elapsed * 0.22) * 0.012 + pointer.x * 0.012;
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, pointer.x * 0.04, 0.045);
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, -pointer.y * 0.025, 0.045);
+    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.09, 0.035);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.07, 0.035);
+    state.camera.lookAt(0, -0.18, 0);
   });
 
   return (
-    <group ref={groupRef} scale={0.82}>
-      <points ref={ref} geometry={geometry}>
-        <shaderMaterial
+    <group ref={groupRef} position={[0.1, 0.08, 0]} scale={0.94}>
+      <lineSegments geometry={lineGeometry}>
+        <lineBasicMaterial
           blending={THREE.AdditiveBlending}
+          color={WHITE}
           depthWrite={false}
-          fragmentShader={fragmentShader}
+          opacity={0.16}
           transparent
-          vertexShader={vertexShader}
+        />
+      </lineSegments>
+      <points geometry={pointGeometry}>
+        <pointsMaterial
+          blending={THREE.AdditiveBlending}
+          color={WHITE}
+          depthWrite={false}
+          opacity={0.28}
+          size={0.012}
+          sizeAttenuation
+          transparent
         />
       </points>
+
+      <FeatureCurve color={PURPLE} opacity={0.82} radius={0.007} points={ellipsePoints([-0.28, 0.43, 0.56], 0.21, 0.115, 0.02)} />
+      <FeatureCurve color={PURPLE} opacity={0.82} radius={0.007} points={ellipsePoints([0.28, 0.43, 0.56], 0.21, 0.115, 0.02)} />
+      <FeatureCurve color={WHITE} opacity={0.7} radius={0.006} points={[[-0.075, 0.43, 0.57], [-0.03, 0.405, 0.6], [0.03, 0.405, 0.6], [0.075, 0.43, 0.57]]} />
+      <FeatureCurve color={CYAN} opacity={0.78} radius={0.006} points={[[-0.39, 0.45, 0.59], [-0.28, 0.47, 0.62], [-0.17, 0.45, 0.59]]} />
+      <FeatureCurve color={CYAN} opacity={0.78} radius={0.006} points={[[0.17, 0.45, 0.59], [0.28, 0.47, 0.62], [0.39, 0.45, 0.59]]} />
+      <FeatureCurve color={WHITE} opacity={0.82} radius={0.008} points={[[0.0, 0.6, 0.55], [0.03, 0.44, 0.71], [0.0, 0.25, 0.83], [-0.06, 0.2, 0.69]]} />
+      <FeatureCurve color={WHITE} opacity={0.62} radius={0.005} points={[[0.06, 0.2, 0.69], [0.13, 0.205, 0.62], [0.18, 0.18, 0.58]]} />
+      <FeatureCurve color={PINK} opacity={0.62} radius={0.006} points={[[-0.21, 0.04, 0.55], [-0.08, 0.02, 0.61], [0, 0.025, 0.63], [0.08, 0.02, 0.61], [0.21, 0.04, 0.55]]} />
+      <FeatureCurve color={PURPLE} opacity={0.66} radius={0.01} points={[[-0.44, 0.08, 0.43], [-0.36, -0.23, 0.56], [-0.14, -0.43, 0.63], [0, -0.48, 0.65], [0.14, -0.43, 0.63], [0.36, -0.23, 0.56], [0.44, 0.08, 0.43]]} />
+      <FeatureCurve color={PURPLE} opacity={0.58} radius={0.009} points={[[-0.54, 0.74, 0.34], [-0.32, 0.86, 0.53], [0, 0.9, 0.6], [0.32, 0.86, 0.53], [0.54, 0.74, 0.34]]} />
+      <FeatureCurve color={WHITE} opacity={0.52} radius={0.006} points={earPoints(-1)} />
+      <FeatureCurve color={WHITE} opacity={0.52} radius={0.006} points={earPoints(1)} />
+
+      <mesh position={[0, 0.24, 0.84]}>
+        <sphereGeometry args={[0.028, 18, 18]} />
+        <meshBasicMaterial
+          blending={THREE.AdditiveBlending}
+          color={WHITE}
+          depthWrite={false}
+          opacity={0.9}
+          transparent
+        />
+      </mesh>
     </group>
   );
 }
@@ -256,37 +424,36 @@ function VisualFallback({ label = "Abstract portrait visual" }: { label?: string
       className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full overflow-hidden opacity-70 md:w-[62vw]"
       role="img"
     >
-      <div className="absolute inset-8 opacity-80 [background-image:radial-gradient(circle,rgba(139,92,246,0.9)_1px,transparent_1.5px)] [background-size:18px_18px] [mask-image:radial-gradient(ellipse_at_center,black_22%,transparent_72%)]" />
-      <div className="absolute inset-16 opacity-60 [background-image:radial-gradient(circle,rgba(34,211,238,0.85)_1px,transparent_1.5px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_18%,transparent_68%)]" />
+      <div className="absolute inset-8 opacity-80 [background-image:radial-gradient(circle,rgba(247,248,255,0.7)_1px,transparent_1.5px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_at_center,black_24%,transparent_70%)]" />
+      <div className="absolute inset-16 opacity-55 [background-image:radial-gradient(circle,rgba(159,246,255,0.8)_1px,transparent_1.5px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_18%,transparent_68%)]" />
     </div>
   );
 }
 
 export default function Portrait3D() {
-  const { data, webGLSupported } = usePointCloud();
+  const [webGLSupported, setWebGLSupported] = useState(true);
   const mode = usePortraitMode();
 
-  if (!webGLSupported) {
-    return <VisualFallback label="Abstract portrait fallback for environments without WebGL" />;
-  }
+  useEffect(() => {
+    setWebGLSupported(canUseWebGL());
+  }, []);
 
-  if (!data) {
-    return <VisualFallback label="Loading abstract portrait point cloud" />;
+  if (!webGLSupported) {
+    return <VisualFallback label="Abstract wireframe portrait fallback for environments without WebGL" />;
   }
 
   return (
     <div
-      aria-label="Abstract point-cloud portrait"
-      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full opacity-85 [mask-image:linear-gradient(to_left,black_42%,rgba(0,0,0,0.82)_70%,transparent_100%)] md:w-[62vw]"
+      aria-label="Reactive wireframe bust portrait"
+      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full opacity-90 [mask-image:linear-gradient(to_left,black_48%,rgba(0,0,0,0.8)_74%,transparent_100%)] md:w-[62vw]"
       role="img"
     >
       <Canvas
-        camera={{ position: [0, 0, 4.1], fov: 36 }}
-        dpr={[1, 1.45]}
+        camera={{ position: [0, -0.06, 4.45], fov: 36 }}
+        dpr={[1, 1.55]}
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
-        <ambientLight intensity={0.7} />
-        <Cloud data={data} mode={mode} />
+        <Bust mode={mode} />
       </Canvas>
     </div>
   );
