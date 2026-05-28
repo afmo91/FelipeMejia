@@ -1,8 +1,8 @@
 const knownFor = [
-  "Turning ambiguity into shipped MVPs through prioritization and ruthless scope management.",
-  "Building observability into products with activation, engagement, and retention loops.",
-  "Designing growth systems with measurable lift across experiments, pricing, and funnels.",
-  "Leading cross-functional execution with product, engineering, design, data, and sales.",
+  "Turning ambiguous product ideas into scoped MVPs, shipped workflows, and measurable next steps.",
+  "Building observability into products so activation, engagement, retention, and revenue are visible early.",
+  "Designing growth systems with measurable lift across experiments, pricing, onboarding, and funnels.",
+  "Leading cross-functional execution with product, engineering, design, data, sales, and commercial teams.",
 ];
 
 const workingStyle = [
@@ -17,9 +17,9 @@ export default function AboutSection({ compact = false }: { compact?: boolean })
       <div className="mx-auto max-w-7xl">
         <div className="max-w-5xl">
           <p className="eyebrow">About</p>
-          <h2 className="section-title">Product & Growth Leader | 0→1 Builder</h2>
+          <h2 className="section-title">Product & Growth Leader | 0→1 Builder for AI, SaaS, and Digital Growth</h2>
           <p className="mt-7 max-w-3xl text-lg leading-8 text-gray-300">
-            I build products that ship, grow, and earn trust—combining product discovery, data instrumentation, and experimentation. I’m especially interested in AI-enabled workflows and analytics: turning messy real-world systems into usable software.
+            I bring 12+ years across telecom, e-commerce, and B2B SaaS, combining product discovery, growth experimentation, and analytics instrumentation. My work is strongest where the problem is messy: AI-enabled workflows, fragmented data, onboarding friction, unclear funnels, or products that need a sharper path from idea to adoption.
           </p>
         </div>
 

@@ -4,7 +4,7 @@ import AboutSection from "@/components/sections/AboutSection";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "About Felipe Mejia, a product and growth leader known for shipping MVPs, building product observability, and leading cross-functional execution.",
+    "About Felipe Mejia, a freelance product and growth leader for AI-enabled workflows, SaaS growth, analytics instrumentation, and 0 to 1 execution.",
 };
 
 export default function AboutPage() {

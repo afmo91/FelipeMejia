@@ -10,7 +10,7 @@ export default function ResumeSection() {
       <div className="mx-auto max-w-7xl">
         <div className="max-w-4xl">
           <p className="eyebrow">Resume</p>
-          <h2 className="section-title">Interactive Career Timeline</h2>
+          <h2 className="section-title">Career timeline built around shipped outcomes.</h2>
           <div className="mt-6 space-y-3 text-lg leading-8 text-gray-300">
             {cv.summary.map((line) => (
               <p key={line}>{line}</p>
@@ -21,7 +21,7 @@ export default function ResumeSection() {
               Protected CV Downloads
             </Link>
             <a className="button-secondary" href={`mailto:${cv.contact.email}`}>
-              {cv.contact.email}
+              Discuss a project
             </a>
           </div>
         </div>

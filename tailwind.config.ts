@@ -11,7 +11,8 @@ const config: Config = {
         accent2: "#22d3ee"
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"]
+        display: ["var(--font-space-grotesk)", "Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"]
       }
     }
   },

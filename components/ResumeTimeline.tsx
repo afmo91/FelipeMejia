@@ -42,7 +42,7 @@ export default function ResumeTimeline({ cv }: { cv: CombinedCV }) {
                 <span className="absolute left-[11px] top-7 hidden h-3 w-3 bg-accent shadow-[0_0_24px_rgba(139,92,246,0.9)] md:block" />
                 <button
                   aria-expanded={open}
-                  className="glow-panel w-full text-left transition duration-300 hover:-translate-y-0.5"
+                  className="glow-panel w-full text-left transition duration-300 hover:-translate-y-0.5 hover:border-accent2/50"
                   onClick={() => setOpenIndex(open ? -1 : index)}
                   type="button"
                 >

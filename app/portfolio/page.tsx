@@ -4,7 +4,7 @@ import PortfolioSection from "@/components/sections/PortfolioSection";
 export const metadata: Metadata = {
   title: "Portfolio",
   description:
-    "Selected product and growth projects by Felipe Mejia, including AI ads, digital onboarding, attribution, experimentation, and product-led growth.",
+    "Commercial product and growth work by Felipe Mejia, including AI ads, digital onboarding, attribution, experimentation, SaaS analytics, and PLG systems.",
 };
 
 export default function PortfolioPage() {

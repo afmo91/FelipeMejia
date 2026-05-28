@@ -7,7 +7,7 @@ export default function ContactForm() {
 
   return (
     <form
-      className="mt-10 grid max-w-2xl gap-5"
+      className="grid gap-5"
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -35,11 +35,11 @@ export default function ContactForm() {
         <textarea className="form-field min-h-40 resize-y" id="message" name="message" required />
       </div>
       <button className="button-primary w-fit" type="submit">
-        Send message
+        Send project note
       </button>
       {sent ? (
         <p className="text-sm text-emerald-300" role="status">
-          Message logged locally.
+          Message logged locally for now. Email delivery can be wired next.
         </p>
       ) : null}
     </form>

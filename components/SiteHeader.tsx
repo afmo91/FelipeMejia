@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Home" },
+  { href: "/#services", label: "Services" },
   { href: "/#about", label: "About" },
   { href: "/#resume", label: "Resume" },
   { href: "/#portfolio", label: "Portfolio" },
@@ -56,6 +57,60 @@ export default function SiteHeader() {
     window.addEventListener("hashchange", updateHash);
     return () => window.removeEventListener("hashchange", updateHash);
   }, []);
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      return;
+    }
+
+    let frame = 0;
+    const sectionIds = ["services", "about", "resume", "portfolio", "contact"];
+
+    function updateActiveSection() {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        if (window.scrollY < 240) {
+          setHash("");
+          frame = 0;
+          return;
+        }
+
+        const viewportAnchor = window.innerHeight * 0.38;
+        let active = "";
+        let closest = Number.POSITIVE_INFINITY;
+
+        sectionIds.forEach((id) => {
+          const element = document.getElementById(id);
+          if (!element) {
+            return;
+          }
+          const rect = element.getBoundingClientRect();
+          const distance = Math.abs(rect.top - viewportAnchor);
+          if (rect.bottom > 120 && distance < closest) {
+            closest = distance;
+            active = `#${id}`;
+          }
+        });
+
+        setHash(active);
+        frame = 0;
+      });
+    }
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
+  }, [pathname]);
 
   const renderLink = ({ href, label }: (typeof navItems)[number]) => {
     const active = isActiveLink(pathname, hash, href);
