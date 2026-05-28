@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
 
 const config: Config = {
   content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}"],
@@ -11,11 +12,12 @@ const config: Config = {
         accent2: "#22d3ee"
       },
       fontFamily: {
-        display: ["var(--font-space-grotesk)", "Inter", "system-ui", "sans-serif"],
-        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"]
+        display: ["var(--font-geist)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["var(--font-geist)", "system-ui", "sans-serif"]
       }
     }
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [typography],
 };
 export default config;

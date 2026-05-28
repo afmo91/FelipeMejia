@@ -48,10 +48,6 @@ export default function SiteHeader() {
   }, [open]);
 
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     const updateHash = () => setHash(window.location.hash);
     updateHash();
     window.addEventListener("hashchange", updateHash);

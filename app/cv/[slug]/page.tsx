@@ -10,8 +10,11 @@ export function generateStaticParams() {
   ];
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const combined = getCombinedCV(params.slug);
+type CVParams = Promise<{ slug: string }>;
+
+export async function generateMetadata({ params }: { params: CVParams }): Promise<Metadata> {
+  const { slug } = await params;
+  const combined = getCombinedCV(slug);
   if (combined) {
     return {
       title: combined.title,
@@ -19,7 +22,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     };
   }
 
-  const cv = getCV(params.slug);
+  const cv = getCV(slug);
 
   return {
     title: cv?.title || "Tailored CV",
@@ -27,8 +30,9 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function CVPage({ params }: { params: { slug: string } }) {
-  const combined = getCombinedCV(params.slug);
+export default async function CVPage({ params }: { params: CVParams }) {
+  const { slug } = await params;
+  const combined = getCombinedCV(slug);
   if (combined) {
     return (
       <section className="section">
@@ -70,7 +74,7 @@ export default function CVPage({ params }: { params: { slug: string } }) {
     );
   }
 
-  const cv = getCV(params.slug);
+  const cv = getCV(slug);
 
   if (!cv) {
     return notFound();

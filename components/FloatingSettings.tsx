@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type PortraitMode = "parallax" | "static" | "touch";
 
@@ -10,16 +10,22 @@ const options: { label: string; mode: PortraitMode }[] = [
   { label: "Follow Touch", mode: "touch" },
 ];
 
+function isPortraitMode(value: string | null): value is PortraitMode {
+  return value === "parallax" || value === "static" || value === "touch";
+}
+
+function getStoredMode() {
+  if (typeof window === "undefined") {
+    return "parallax";
+  }
+
+  const stored = window.localStorage.getItem("portrait-mode");
+  return isPortraitMode(stored) ? stored : "parallax";
+}
+
 export default function FloatingSettings() {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<PortraitMode>("parallax");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("portrait-mode") as PortraitMode | null;
-    if (stored === "parallax" || stored === "static" || stored === "touch") {
-      setMode(stored);
-    }
-  }, []);
+  const [mode, setMode] = useState<PortraitMode>(getStoredMode);
 
   function updateMode(nextMode: PortraitMode) {
     setMode(nextMode);

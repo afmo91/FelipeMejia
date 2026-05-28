@@ -3,24 +3,27 @@
 import { useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import type { MutableRefObject } from "react";
 import * as THREE from "three";
 
 type PortraitMode = "parallax" | "static" | "touch";
-type MotionTarget = { fov: number; pitch: number; scale: number; x: number; y: number; yaw: number; z: number };
 type PortraitGeometry = {
   edgesGeometry: THREE.EdgesGeometry;
   headGeometry: THREE.BufferGeometry;
   pointsGeometry: THREE.BufferGeometry;
 };
-type Vec3Tuple = [number, number, number];
+type PortraitFocus = {
+  id: string;
+  progress: number;
+  side: "left" | "right";
+  titleX: number;
+  titleY: number;
+};
 
 const MODEL_URL = "/portrait/felipe-bust.glb";
-const DEFAULT_MOTION: MotionTarget = { fov: 34, pitch: 0.02, scale: 0.86, x: 0.28, y: -0.2, yaw: -0.5, z: 0 };
+const DEFAULT_FOCUS: PortraitFocus = { id: "home", progress: 0, side: "left", titleX: 0.27, titleY: 0.45 };
 const WHITE = new THREE.Color("#f8fbff");
 const CYAN = new THREE.Color("#9ff6ff");
 const PURPLE = new THREE.Color("#b7a2ff");
-const PINK = new THREE.Color("#ff8acb");
 
 function canUseWebGL() {
   try {
@@ -35,14 +38,16 @@ function canUseWebGL() {
 }
 
 function usePortraitMode() {
-  const [mode, setMode] = useState<PortraitMode>("parallax");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("portrait-mode") as PortraitMode | null;
-    if (stored === "parallax" || stored === "static" || stored === "touch") {
-      setMode(stored);
+  const [mode, setMode] = useState<PortraitMode>(() => {
+    if (typeof window === "undefined") {
+      return "parallax";
     }
 
+    const stored = window.localStorage.getItem("portrait-mode");
+    return stored === "parallax" || stored === "static" || stored === "touch" ? stored : "parallax";
+  });
+
+  useEffect(() => {
     function updateMode(event: Event) {
       const nextMode = (event as CustomEvent<PortraitMode>).detail;
       if (nextMode === "parallax" || nextMode === "static" || nextMode === "touch") {
@@ -55,36 +60,6 @@ function usePortraitMode() {
   }, []);
 
   return mode;
-}
-
-function getSectionMotionTarget(): MotionTarget {
-  const sections: (MotionTarget & { id: string })[] = [
-    { ...DEFAULT_MOTION, id: "services", fov: 35, scale: 0.8, x: 0.36, y: -0.04, yaw: -0.42, z: 0.1 },
-    { ...DEFAULT_MOTION, id: "about", fov: 36, scale: 0.77, x: 0.42, y: -0.15, yaw: -0.46, z: 0.18 },
-    { ...DEFAULT_MOTION, id: "resume", fov: 35, scale: 0.82, x: 0.22, y: -0.28, yaw: -0.56, z: -0.08 },
-    { ...DEFAULT_MOTION, id: "portfolio", fov: 33, scale: 0.88, x: 0.34, y: -0.18, yaw: -0.5, z: -0.04 },
-    { ...DEFAULT_MOTION, id: "contact", fov: 37, scale: 0.76, x: 0.46, y: -0.36, yaw: -0.58, z: 0.22 },
-  ];
-
-  let selected = DEFAULT_MOTION;
-  let closest = Number.POSITIVE_INFINITY;
-  const viewportCenter = window.innerHeight * 0.5;
-
-  sections.forEach((section) => {
-    const element = document.getElementById(section.id);
-    if (!element) {
-      return;
-    }
-
-    const rect = element.getBoundingClientRect();
-    const distance = Math.abs(rect.top + rect.height * 0.28 - viewportCenter);
-    if (distance < closest) {
-      closest = distance;
-      selected = section;
-    }
-  });
-
-  return selected;
 }
 
 function getScrollProgress() {
@@ -153,145 +128,6 @@ function makePointGeometry(geometry: THREE.BufferGeometry) {
   return pointsGeometry;
 }
 
-function seededRandom(seed: number) {
-  let value = seed;
-  return () => {
-    value = (value * 16807) % 2147483647;
-    return (value - 1) / 2147483646;
-  };
-}
-
-function makeAmbientPointGeometry() {
-  const random = seededRandom(78191);
-  const count = 950;
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  const color = new THREE.Color();
-
-  for (let index = 0; index < count; index += 1) {
-    const radius = 0.9 + random() * 2.1;
-    const angle = random() * Math.PI * 2;
-    const height = (random() - 0.48) * 3.2;
-    const depth = -0.72 - random() * 0.8;
-
-    positions[index * 3] = Math.cos(angle) * radius + 0.15;
-    positions[index * 3 + 1] = height;
-    positions[index * 3 + 2] = Math.sin(angle) * radius * 0.34 + depth;
-
-    color.copy(PURPLE).lerp(CYAN, random() * 0.75);
-    if (random() > 0.82) {
-      color.lerp(PINK, 0.45);
-    }
-    color.multiplyScalar(0.48 + random() * 0.52);
-    colors[index * 3] = color.r;
-    colors[index * 3 + 1] = color.g;
-    colors[index * 3 + 2] = color.b;
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  geometry.computeBoundingSphere();
-  return geometry;
-}
-
-function curveGeometry(points: Vec3Tuple[], radius = 0.005) {
-  const curve = new THREE.CatmullRomCurve3(points.map((point) => new THREE.Vector3(...point)));
-  return new THREE.TubeGeometry(curve, Math.max(18, points.length * 8), radius, 8, false);
-}
-
-function ellipsePoints(
-  center: Vec3Tuple,
-  radiusX: number,
-  radiusY: number,
-  zRadius = 0,
-  count = 56,
-): Vec3Tuple[] {
-  const points: Vec3Tuple[] = [];
-  for (let index = 0; index <= count; index += 1) {
-    const t = (index / count) * Math.PI * 2;
-    points.push([
-      center[0] + Math.cos(t) * radiusX,
-      center[1] + Math.sin(t) * radiusY,
-      center[2] + Math.sin(t) * zRadius,
-    ]);
-  }
-  return points;
-}
-
-function FeatureCurve({
-  color,
-  opacity = 0.26,
-  points,
-  radius = 0.004,
-}: {
-  color: string;
-  opacity?: number;
-  points: Vec3Tuple[];
-  radius?: number;
-}) {
-  const geometry = useMemo(() => curveGeometry(points, radius), [points, radius]);
-
-  useEffect(() => {
-    return () => geometry.dispose();
-  }, [geometry]);
-
-  return (
-    <mesh geometry={geometry} renderOrder={4}>
-      <meshBasicMaterial
-        blending={THREE.AdditiveBlending}
-        color={color}
-        depthTest
-        depthWrite={false}
-        opacity={opacity}
-        transparent
-      />
-    </mesh>
-  );
-}
-
-function AmbientPointField({
-  pointerRef,
-  scrollRef,
-}: {
-  pointerRef: MutableRefObject<{ x: number; y: number; targetX: number; targetY: number }>;
-  scrollRef: MutableRefObject<number>;
-}) {
-  const fieldRef = useRef<THREE.Points>(null);
-  const geometry = useMemo(() => makeAmbientPointGeometry(), []);
-
-  useEffect(() => {
-    return () => geometry.dispose();
-  }, [geometry]);
-
-  useFrame((state) => {
-    if (!fieldRef.current) {
-      return;
-    }
-
-    const pointer = pointerRef.current;
-    const scroll = scrollRef.current;
-    fieldRef.current.rotation.y = state.clock.elapsedTime * 0.018 + pointer.x * 0.045;
-    fieldRef.current.rotation.x = -0.12 + pointer.y * 0.025;
-    fieldRef.current.position.y = (0.5 - scroll) * 0.38;
-    fieldRef.current.position.x = 0.16 + pointer.x * 0.05;
-  });
-
-  return (
-    <points ref={fieldRef} geometry={geometry} position={[0.18, -0.08, -0.82]} renderOrder={1}>
-      <pointsMaterial
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-        opacity={0.26}
-        size={0.017}
-        sizeAttenuation
-        transparent
-        vertexColors
-      />
-    </points>
-  );
-}
-
 function createPortraitGeometry(scene: THREE.Group): PortraitGeometry {
   const mesh = findHeadMesh(scene);
 
@@ -329,7 +165,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const sectionRef = useRef<MotionTarget>(DEFAULT_MOTION);
+  const focusRef = useRef<PortraitFocus>(DEFAULT_FOCUS);
   const scrollRef = useRef(0);
 
   const portraitGeometry = useMemo(() => createPortraitGeometry(scene), [scene]);
@@ -375,28 +211,47 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
   useEffect(() => {
     let frame = 0;
 
-    function updateMotionTarget() {
+    function updateScrollProgress() {
       if (frame) {
         return;
       }
 
       frame = window.requestAnimationFrame(() => {
-        sectionRef.current = getSectionMotionTarget();
         scrollRef.current = getScrollProgress();
         frame = 0;
       });
     }
 
-    updateMotionTarget();
-    window.addEventListener("scroll", updateMotionTarget, { passive: true });
-    window.addEventListener("resize", updateMotionTarget);
+    updateScrollProgress();
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("resize", updateScrollProgress);
     return () => {
-      window.removeEventListener("scroll", updateMotionTarget);
-      window.removeEventListener("resize", updateMotionTarget);
+      window.removeEventListener("scroll", updateScrollProgress);
+      window.removeEventListener("resize", updateScrollProgress);
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    function handleFocusChange(event: Event) {
+      const detail = (event as CustomEvent<PortraitFocus>).detail;
+      if (!detail || (detail.side !== "left" && detail.side !== "right")) {
+        return;
+      }
+
+      focusRef.current = {
+        id: detail.id || "home",
+        progress: THREE.MathUtils.clamp(detail.progress || 0, 0, 1),
+        side: detail.side,
+        titleX: THREE.MathUtils.clamp(detail.titleX || 0.5, 0, 1),
+        titleY: THREE.MathUtils.clamp(detail.titleY || 0.45, 0, 1),
+      };
+    }
+
+    window.addEventListener("portrait-focus-change", handleFocusChange);
+    return () => window.removeEventListener("portrait-focus-change", handleFocusChange);
   }, []);
 
   useFrame((state) => {
@@ -409,21 +264,25 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
     pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.06);
     pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.06);
 
-    const active = mode === "static" ? DEFAULT_MOTION : sectionRef.current;
+    const focus = mode === "static" ? DEFAULT_FOCUS : focusRef.current;
     const scroll = scrollRef.current;
-    const scrollY = window.scrollY > 8 && mode !== "static" ? (0.5 - scroll) * 0.68 : 0;
-    const scrollDepth = mode === "static" ? 0 : (scroll - 0.42) * 0.28;
+    const titleX = (focus.titleX - 0.5) * 2;
+    const titleY = (focus.titleY - 0.5) * 2;
+    const sideX = focus.side === "right" ? 1.02 : -1.02;
+    const sectionLift = 0.18 - focus.progress * 0.34;
+    const targetScale = focus.id === "home" ? 0.88 : focus.id === "contact" ? 0.72 : 0.78 + Math.sin(focus.progress * Math.PI) * 0.08;
+    const scrollDepth = mode === "static" ? 0 : (scroll - 0.42) * 0.18;
     const elapsed = state.clock.elapsedTime;
-    const targetYaw = active.yaw + pointer.x * 0.14;
-    const targetPitch = active.pitch - pointer.y * 0.065;
+    const targetYaw = titleX * 0.46 + pointer.x * 0.045;
+    const targetPitch = -titleY * 0.14 - pointer.y * 0.032;
 
     group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetYaw, 0.055);
     group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetPitch, 0.055);
-    group.rotation.z = Math.sin(elapsed * 0.16) * 0.005 + pointer.x * 0.005;
-    group.position.x = THREE.MathUtils.lerp(group.position.x, pointer.x * 0.03 + active.x, 0.042);
-    group.position.y = THREE.MathUtils.lerp(group.position.y, -pointer.y * 0.02 + active.y + scrollY, 0.042);
+    group.rotation.z = Math.sin(elapsed * 0.14) * 0.004 + pointer.x * 0.004;
+    group.position.x = THREE.MathUtils.lerp(group.position.x, sideX + pointer.x * 0.02, 0.038);
+    group.position.y = THREE.MathUtils.lerp(group.position.y, sectionLift - titleY * 0.08 - pointer.y * 0.018, 0.038);
     group.position.z = THREE.MathUtils.lerp(group.position.z, scrollDepth, 0.035);
-    group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x, active.scale + scroll * 0.05, 0.045));
+    group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x, targetScale, 0.04));
 
     if (glowRef.current) {
       glowRef.current.rotation.copy(group.rotation);
@@ -435,9 +294,9 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.06, 0.035);
     state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.055, 0.035);
     const camera = state.camera as THREE.PerspectiveCamera;
-    camera.fov = THREE.MathUtils.lerp(camera.fov, active.fov, 0.035);
+    camera.fov = THREE.MathUtils.lerp(camera.fov, focus.id === "home" ? 33 : 36, 0.035);
     camera.updateProjectionMatrix();
-    state.camera.lookAt(0.06, -0.22, 0);
+    state.camera.lookAt(0, -0.16, 0);
   });
 
   return (
@@ -445,7 +304,6 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
       <ambientLight intensity={0.85} />
       <pointLight color="#b7a2ff" intensity={1.4} position={[1.7, 1.4, 2.3]} />
       <pointLight color="#9ff6ff" intensity={0.85} position={[-1.5, -0.2, 2.6]} />
-      <AmbientPointField pointerRef={pointerRef} scrollRef={scrollRef} />
 
       <mesh ref={glowRef} geometry={portraitGeometry.headGeometry}>
         <meshBasicMaterial
@@ -458,7 +316,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
         />
       </mesh>
 
-      <group ref={groupRef} scale={DEFAULT_MOTION.scale}>
+      <group ref={groupRef} scale={0.84}>
         <mesh geometry={portraitGeometry.headGeometry} renderOrder={0}>
           <meshBasicMaterial colorWrite={false} depthTest depthWrite />
         </mesh>
@@ -467,9 +325,9 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
           <meshStandardMaterial
             color="#dfe7ff"
             emissive="#8b5cf6"
-            emissiveIntensity={0.12}
+            emissiveIntensity={0.08}
             metalness={0.08}
-            opacity={0.06}
+            opacity={0.05}
             roughness={0.34}
             transparent
             depthWrite
@@ -482,7 +340,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
             color="#f8fbff"
             depthTest
             depthWrite={false}
-            opacity={0.04}
+            opacity={0.026}
             transparent
             wireframe
           />
@@ -494,7 +352,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
             color="#ffffff"
             depthTest
             depthWrite={false}
-            opacity={0.22}
+            opacity={0.12}
             transparent
           />
         </lineSegments>
@@ -504,20 +362,14 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
             blending={THREE.AdditiveBlending}
             depthTest
             depthWrite={false}
-            opacity={0.48}
-            size={0.0062}
+            opacity={0.42}
+            size={0.006}
             sizeAttenuation
             transparent
             vertexColors
           />
         </points>
 
-        <FeatureCurve color="#9ff6ff" opacity={0.2} points={ellipsePoints([-0.28, 0.35, 0.77], 0.18, 0.08, 0.018)} />
-        <FeatureCurve color="#9ff6ff" opacity={0.2} points={ellipsePoints([0.19, 0.36, 0.79], 0.17, 0.075, 0.018)} />
-        <FeatureCurve color="#f8fbff" opacity={0.18} points={[[-0.1, 0.36, 0.79], [-0.02, 0.35, 0.82], [0.04, 0.36, 0.8]]} />
-        <FeatureCurve color="#b7a2ff" opacity={0.16} points={[[-0.34, -0.28, 0.62], [-0.2, -0.46, 0.73], [0.02, -0.52, 0.76], [0.24, -0.43, 0.69], [0.36, -0.22, 0.58]]} />
-        <FeatureCurve color="#ff8acb" opacity={0.13} points={[[-0.17, -0.02, 0.76], [-0.06, -0.04, 0.82], [0.07, -0.04, 0.82], [0.18, -0.02, 0.76]]} />
-        <FeatureCurve color="#b7a2ff" opacity={0.12} points={[[0.24, 0.9, -0.34], [0.43, 0.84, -0.52], [0.56, 0.72, -0.55], [0.47, 0.62, -0.48], [0.28, 0.66, -0.36]]} radius={0.007} />
       </group>
     </>
   );
@@ -547,12 +399,8 @@ function VisualFallback({ label = "Felipe Mejia wireframe portrait fallback" }: 
 }
 
 export default function Portrait3D() {
-  const [webGLSupported, setWebGLSupported] = useState(true);
+  const [webGLSupported] = useState(() => (typeof document === "undefined" ? true : canUseWebGL()));
   const mode = usePortraitMode();
-
-  useEffect(() => {
-    setWebGLSupported(canUseWebGL());
-  }, []);
 
   if (!webGLSupported) {
     return <VisualFallback />;
@@ -561,12 +409,12 @@ export default function Portrait3D() {
   return (
     <div
       aria-label="Reactive GLB wireframe portrait of Felipe Mejia"
-      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full overflow-hidden opacity-95 [mask-image:linear-gradient(to_left,black_46%,rgba(0,0,0,0.74)_72%,transparent_100%)] md:w-[56vw]"
+      className="pointer-events-none fixed inset-0 z-0 h-screen w-full overflow-hidden opacity-90 [mask-image:radial-gradient(circle_at_center,black_34%,rgba(0,0,0,0.76)_58%,transparent_88%)]"
       role="img"
     >
       <Suspense fallback={<CanvasFallback />}>
         <Canvas
-          camera={{ position: [0, -0.02, 4.72], fov: 33 }}
+          camera={{ position: [0, -0.02, 4.9], fov: 34 }}
           dpr={[1, 1.65]}
           gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
         >
