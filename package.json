@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "generate:cv-pdfs": "node scripts/generate-cv-pdfs.mjs",
-    "lint:cv": "node scripts/lint-cv-content.mjs"
+    "lint:cv": "node scripts/lint-cv-content.mjs",
+    "generate:portrait": "node scripts/generate-portrait-data.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
@@ -20,7 +21,8 @@
     "next-auth": "^4.24.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-markdown": "^9.0.1"
+    "react-markdown": "^9.0.1",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",

@@ -7,12 +7,42 @@ import * as THREE from "three";
 type PointCloudData = {
   positions: Float32Array;
   colors: Float32Array;
+  sizes: Float32Array;
+};
+
+type PortraitPayload = {
+  positions: number[];
+  colors: number[];
+  sizes: number[];
 };
 
 type PortraitMode = "parallax" | "static" | "touch";
 
-const IMAGE_SRC = "/assets/user.jpg";
-const MAX_POINTS = 14000;
+const DATA_SRC = "/portrait/points.json";
+
+const vertexShader = `
+  attribute vec3 color;
+  attribute float pointSize;
+  varying vec3 vColor;
+
+  void main() {
+    vColor = color;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = pointSize * (360.0 / max(1.0, -mvPosition.z));
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const fragmentShader = `
+  varying vec3 vColor;
+
+  void main() {
+    vec2 center = gl_PointCoord - vec2(0.5);
+    float distanceFromCenter = length(center);
+    float alpha = smoothstep(0.5, 0.08, distanceFromCenter);
+    gl_FragColor = vec4(vColor, alpha * 0.92);
+  }
+`;
 
 function fract(value: number) {
   return value - Math.floor(value);
@@ -62,131 +92,28 @@ function usePortraitMode() {
   return mode;
 }
 
-function colorFromPixel(red: number, green: number, blue: number, brightness: number, saturation: number) {
-  const purple = [0.62, 0.42, 1];
-  const cyan = [0.18, 0.9, 0.98];
-  const pink = [0.95, 0.32, 0.72];
-  const accent = brightness > 0.68 ? cyan : saturation > 0.18 ? pink : purple;
-  const contrast = 1.42;
-  const base = [
-    THREE.MathUtils.clamp((red - 0.5) * contrast + 0.58, 0.08, 1),
-    THREE.MathUtils.clamp((green - 0.5) * contrast + 0.58, 0.08, 1),
-    THREE.MathUtils.clamp((blue - 0.5) * contrast + 0.58, 0.08, 1),
-  ];
-  const mix = THREE.MathUtils.clamp(0.22 + saturation * 0.42 + (1 - brightness) * 0.16, 0.2, 0.52);
-
-  return [
-    base[0] * (1 - mix) + accent[0] * mix,
-    base[1] * (1 - mix) + accent[1] * mix,
-    base[2] * (1 - mix) + accent[2] * mix,
-  ];
-}
-
-function createPointCloudFromImage(image: HTMLImageElement): PointCloudData {
-  const sampleWidth = 190;
-  const cropWidth = image.naturalWidth * 0.84;
-  const cropX = (image.naturalWidth - cropWidth) / 2;
-  const cropY = Math.max(0, image.naturalHeight * 0.02);
-  const cropHeight = Math.min(image.naturalHeight - cropY, cropWidth * 1.28);
-  const sampleHeight = Math.round(sampleWidth * (cropHeight / cropWidth));
-  const canvas = document.createElement("canvas");
-  canvas.width = sampleWidth;
-  canvas.height = sampleHeight;
-
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) {
-    return createFallbackPointCloud();
-  }
-
-  context.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, sampleWidth, sampleHeight);
-  const pixels = context.getImageData(0, 0, sampleWidth, sampleHeight).data;
-  const positions: number[] = [];
-  const colors: number[] = [];
-  const stride = Math.max(1, Math.ceil(Math.sqrt((sampleWidth * sampleHeight) / (MAX_POINTS * 1.25))));
-
-  for (let y = 0; y < sampleHeight; y += stride) {
-    for (let x = 0; x < sampleWidth; x += stride) {
-      const pixelIndex = y * sampleWidth + x;
-      const offset = pixelIndex * 4;
-      const alpha = pixels[offset + 3] / 255;
-      if (alpha < 0.08) {
-        continue;
-      }
-
-      const red = pixels[offset] / 255;
-      const green = pixels[offset + 1] / 255;
-      const blue = pixels[offset + 2] / 255;
-      const brightness = red * 0.2126 + green * 0.7152 + blue * 0.0722;
-      const maxChannel = Math.max(red, green, blue);
-      const minChannel = Math.min(red, green, blue);
-      const saturation = maxChannel - minChannel;
-      const nx = x / sampleWidth - 0.5;
-      const ny = 0.5 - y / sampleHeight;
-      const faceMask = THREE.MathUtils.clamp(
-        1 - (Math.pow(nx / 0.42, 2) + Math.pow((ny - 0.02) / 0.58, 2)) * 0.44,
-        0,
-        1,
-      );
-      const detail = (1 - brightness) * 0.52 + saturation * 0.68 + faceMask * 0.36;
-      const keep = seededNoise(pixelIndex + brightness * 113) < 0.12 + detail * 0.74;
-
-      if (!keep || positions.length / 3 >= MAX_POINTS) {
-        continue;
-      }
-
-      const noiseA = seededNoise(pixelIndex + 17);
-      const noiseB = seededNoise(pixelIndex + 71);
-      const noiseC = seededNoise(pixelIndex + 137);
-      const curve = 1 - Math.min(1, Math.sqrt(nx * nx + ny * ny) * 1.5);
-      const depth =
-        faceMask * 0.78 +
-        curve * 0.32 +
-        (0.5 - brightness) * 0.58 +
-        saturation * 0.62 +
-        Math.sin((nx * 9 + ny * 6) * Math.PI) * 0.045;
-
-      positions.push(
-        nx * 2.25 + (noiseB - 0.5) * 0.085,
-        ny * 2.95 + (noiseC - 0.5) * 0.085,
-        depth + (noiseA - 0.5) * 0.16,
-      );
-
-      colors.push(...colorFromPixel(red, green, blue, brightness, saturation));
-    }
-  }
-
-  if (positions.length < 900) {
-    return createFallbackPointCloud();
-  }
-
-  return {
-    positions: new Float32Array(positions),
-    colors: new Float32Array(colors),
-  };
-}
-
 function createFallbackPointCloud(): PointCloudData {
-  const positions = new Float32Array(3600 * 3);
-  const colors = new Float32Array(3600 * 3);
+  const count = 5200;
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
 
-  for (let index = 0; index < 3600; index += 1) {
+  for (let index = 0; index < count; index += 1) {
     const angle = index * 2.399963229728653;
-    const radius = Math.sqrt(index / 3600) * 1.05;
-    const brightness = 0.35 + seededNoise(index + 5) * 0.65;
-    const wave = Math.sin(index * 0.035) * 0.32;
+    const radius = Math.sqrt(index / count);
     const offset = index * 3;
+    const faceBias = seededNoise(index + 5);
 
-    positions[offset] = Math.cos(angle) * radius * 1.6 + (seededNoise(index + 11) - 0.5) * 0.14;
-    positions[offset + 1] = Math.sin(angle) * radius * 1.9 + (seededNoise(index + 29) - 0.5) * 0.14;
-    positions[offset + 2] = wave + (brightness - 0.5) * 0.9;
-
-    const color = colorFromPixel(0.55, 0.36, 0.96, brightness, 0.25);
-    colors[offset] = color[0];
-    colors[offset + 1] = color[1];
-    colors[offset + 2] = color[2];
+    positions[offset] = Math.cos(angle) * radius * 0.92 + (seededNoise(index + 11) - 0.5) * 0.08;
+    positions[offset + 1] = Math.sin(angle) * radius * 1.3 + (seededNoise(index + 29) - 0.5) * 0.08;
+    positions[offset + 2] = (1 - radius) * 0.75 + Math.sin(index * 0.035) * 0.12;
+    colors[offset] = 0.54 + faceBias * 0.24;
+    colors[offset + 1] = 0.45 + faceBias * 0.28;
+    colors[offset + 2] = 0.96;
+    sizes[index] = 0.016 + faceBias * 0.01;
   }
 
-  return { positions, colors };
+  return { positions, colors, sizes };
 }
 
 function usePointCloud() {
@@ -200,19 +127,31 @@ function usePointCloud() {
     }
 
     let cancelled = false;
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => {
-      if (!cancelled) {
-        setData(createPointCloudFromImage(image));
-      }
-    };
-    image.onerror = () => {
-      if (!cancelled) {
-        setData(createFallbackPointCloud());
-      }
-    };
-    image.src = IMAGE_SRC;
+
+    fetch(DATA_SRC)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Portrait data failed to load");
+        }
+
+        return response.json() as Promise<PortraitPayload>;
+      })
+      .then((payload) => {
+        if (cancelled) {
+          return;
+        }
+
+        setData({
+          colors: new Float32Array(payload.colors),
+          positions: new Float32Array(payload.positions),
+          sizes: new Float32Array(payload.sizes),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setData(createFallbackPointCloud());
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -231,6 +170,7 @@ function Cloud({ data, mode }: { data: PointCloudData; mode: PortraitMode }) {
     const nextGeometry = new THREE.BufferGeometry();
     nextGeometry.setAttribute("position", new THREE.BufferAttribute(data.positions, 3));
     nextGeometry.setAttribute("color", new THREE.BufferAttribute(data.colors, 3));
+    nextGeometry.setAttribute("pointSize", new THREE.BufferAttribute(data.sizes, 1));
     nextGeometry.computeBoundingSphere();
     return nextGeometry;
   }, [data]);
@@ -280,31 +220,29 @@ function Cloud({ data, mode }: { data: PointCloudData; mode: PortraitMode }) {
     const pointer = pointerRef.current;
     pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.045);
     pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.045);
-    scrollRef.current = THREE.MathUtils.lerp(scrollRef.current, scroll, 0.06);
+    scrollRef.current = THREE.MathUtils.lerp(scrollRef.current, scroll, 0.055);
     const elapsed = state.clock.elapsedTime;
 
-    groupRef.current.rotation.y = elapsed * 0.035 + scrollRef.current * 0.7 + pointer.x * 0.2;
-    groupRef.current.rotation.x = Math.sin(elapsed * 0.16) * 0.06 - scrollRef.current * 0.18 - pointer.y * 0.14;
-    groupRef.current.scale.z = 1.08 + scrollRef.current * 0.72 + Math.sin(elapsed * 0.34) * 0.025;
-    groupRef.current.position.x = pointer.x * 0.1;
-    groupRef.current.position.y = -pointer.y * 0.08;
-    ref.current.rotation.z = Math.sin(elapsed * 0.12) * 0.035 + pointer.x * 0.025;
-    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.16, 0.025);
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.12, 0.025);
+    groupRef.current.rotation.y = elapsed * 0.025 + scrollRef.current * 0.55 + pointer.x * 0.18;
+    groupRef.current.rotation.x = Math.sin(elapsed * 0.16) * 0.04 - scrollRef.current * 0.14 - pointer.y * 0.12;
+    groupRef.current.scale.z = 1.06 + scrollRef.current * 0.62 + Math.sin(elapsed * 0.34) * 0.02;
+    groupRef.current.position.x = pointer.x * 0.08;
+    groupRef.current.position.y = -pointer.y * 0.06;
+    ref.current.rotation.z = Math.sin(elapsed * 0.12) * 0.025 + pointer.x * 0.018;
+    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.13, 0.025);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.1, 0.025);
     state.camera.lookAt(0, 0, 0);
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} scale={0.82}>
       <points ref={ref} geometry={geometry}>
-        <pointsMaterial
+        <shaderMaterial
           blending={THREE.AdditiveBlending}
           depthWrite={false}
-          opacity={0.95}
-          size={0.0125}
-          sizeAttenuation
+          fragmentShader={fragmentShader}
           transparent
-          vertexColors
+          vertexShader={vertexShader}
         />
       </points>
     </group>
@@ -339,12 +277,12 @@ export default function Portrait3D() {
   return (
     <div
       aria-label="Abstract point-cloud portrait"
-      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full opacity-80 [mask-image:linear-gradient(to_left,black_36%,rgba(0,0,0,0.78)_64%,transparent_100%)] md:w-[62vw]"
+      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full opacity-85 [mask-image:linear-gradient(to_left,black_42%,rgba(0,0,0,0.82)_70%,transparent_100%)] md:w-[62vw]"
       role="img"
     >
       <Canvas
-        camera={{ position: [0, 0, 3.05], fov: 42 }}
-        dpr={[1, 1.5]}
+        camera={{ position: [0, 0, 4.1], fov: 36 }}
+        dpr={[1, 1.45]}
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
         <ambientLight intensity={0.7} />
