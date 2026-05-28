@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:cv-pdfs": "node scripts/generate-cv-pdfs.mjs",
+    "lint:cv": "node scripts/lint-cv-content.mjs"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.17.14",
     "framer-motion": "^11.18.2",

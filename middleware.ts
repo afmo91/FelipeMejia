@@ -10,4 +10,4 @@ export default withAuth({
   secret: process.env.AUTH_SECRET,
 });
 
-export const config = { matcher: ["/cv/:path*"] };
+export const config = { matcher: ["/cv", "/cv/:path*"] };

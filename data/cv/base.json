@@ -1,0 +1,54 @@
+{
+  "name": "Felipe Mejia",
+  "title": "Product & Growth Leader | 0→1 Builder",
+  "summary": [
+    "Product & Growth leader with 12+ years of experience across telecom, e-commerce and B2B SaaS.",
+    "0→1 builder who turns ambiguity into shipped outcomes, combining discovery, prioritization, and execution.",
+    "Strong analytics + observability mindset, instrumenting lifecycle metrics to guide iteration."
+  ],
+  "contact": {
+    "email": "felipe.mejia@spotz.pro",
+    "linkedin": {
+      "label": "Felipe Mejia LinkedIn",
+      "url": "https://www.linkedin.com/in/felipemejiaosorio/"
+    },
+    "github": {
+      "label": "afmo91 GitHub",
+      "url": "https://github.com/afmo91"
+    }
+  },
+  "experience": [
+    {
+      "company": "Spotz.pro",
+      "role": "Product Builder",
+      "caseStudyHref": "/#portfolio-spotz-ai-ads-operating-layer",
+      "metrics": ["AI ads platform", "6 channels", "0→1 delivery"],
+      "bullets": [
+        "Built an AI-powered multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X and Pinterest.",
+        "Shipped a unified dashboard for workflows + performance monitoring; introduced observability across channels.",
+        "Tested freemium + usage pricing; instrumented activation and retention; iterated based on lifecycle data.",
+        "Led end-to-end delivery: specs, cross-functional alignment, API integrations, QA and releases."
+      ]
+    },
+    {
+      "company": "Adamo Telecom",
+      "role": "Growth Product Manager",
+      "caseStudyHref": "/#portfolio-adamo-digital-onboarding",
+      "metrics": ["same-day activation", "~15% churn reduction", "+25% conversion", "-30% CAC", "€200K+ recovered", "€3M+ budget"],
+      "bullets": [
+        "Unified customer data across Salesforce and marketing stack for full-funnel visibility.",
+        "Migrated legacy onboarding to digital-first; aligned engineering/data/commercial teams across Spain; reduced activation from 5 days to same-day.",
+        "Redesigned onboarding to reduce churn by ~15%.",
+        "Introduced attribution modeling and recovered €200K+ in wasted spend; dashboards used in weekly C-level decisions.",
+        "Built experimentation cadence (+25% conversion, -30% CAC); owned €3M+ annual budget across Google Ads, Meta Ads, programmatic."
+      ]
+    }
+  ],
+  "skills": {
+    "Product": ["discovery", "prioritization", "roadmapping", "AI product strategy", "builder mindset"],
+    "Growth": ["PLG funnels", "onboarding", "experimentation", "pricing tests", "CAC/CLV"],
+    "Analytics/Ops": ["attribution", "dashboards", "observability", "lifecycle instrumentation"],
+    "Leadership": ["cross-functional cadence", "stakeholder management"],
+    "Tools": ["GA4", "Mixpanel", "Tableau", "SQL", "Salesforce", "HubSpot", "Jira", "Asana"]
+  }
+}

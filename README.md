@@ -11,6 +11,13 @@
    ```
 3. Open http://localhost:3000
 
+Generate protected CV PDFs after editing `data/cv/base.json` or files in `data/cv/tweaks`:
+
+```bash
+npm run lint:cv
+npm run generate:cv-pdfs
+```
+
 ## Environment Variables
 Create `.env.local`:
 
@@ -23,6 +30,8 @@ AUTH_PASSWORD=securePassword123
 ## Features
 - Next.js 14 App Router + TypeScript
 - Tailwind CSS dark theme
-- 3D hero effect with React Three Fiber
+- Fixed reactive 3D point-cloud portrait with React Three Fiber
 - Blog from markdown
-- Dynamic CV pages from JSON protected by NextAuth middleware
+- Homepage sections for About, Resume, Portfolio, and Contact
+- Interactive resume timeline from structured CV JSON
+- Protected CV pages and static PDF downloads behind NextAuth middleware

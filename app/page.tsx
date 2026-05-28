@@ -1,5 +1,10 @@
 import AnimatedSection from "@/components/AnimatedSection";
+import FloatingSettings from "@/components/FloatingSettings";
 import PortraitSlot from "@/components/PortraitSlot";
+import AboutSection from "@/components/sections/AboutSection";
+import ContactSection from "@/components/sections/ContactSection";
+import PortfolioSection from "@/components/sections/PortfolioSection";
+import ResumeSection from "@/components/sections/ResumeSection";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,8 +16,10 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <section className="section grid min-h-[78vh] items-center gap-12 md:grid-cols-[1fr_0.9fr]">
-        <div className="max-w-3xl">
+      <PortraitSlot />
+      <FloatingSettings />
+      <section className="section relative z-10 grid min-h-[86vh] items-center gap-12 md:grid-cols-[1fr_0.72fr]">
+        <div className="max-w-3xl py-16">
           <p className="text-sm font-medium text-accent2">Product & Growth Leader | 0-&gt;1 Builder</p>
           <h1 className="mt-5 text-5xl font-semibold leading-tight text-white md:text-7xl">
             Building products that ship, grow, and earn trust.
@@ -20,8 +27,16 @@ export default function HomePage() {
           <p className="mt-7 max-w-2xl text-lg leading-8 text-gray-300">
             I combine product discovery, data instrumentation, and experimentation to turn messy real-world systems into usable AI-enabled software.
           </p>
+          <div className="mt-9 flex flex-wrap gap-4">
+            <a className="button-primary" href="#resume">
+              Explore Resume
+            </a>
+            <a className="button-secondary" href="#portfolio">
+              View Work
+            </a>
+          </div>
         </div>
-        <PortraitSlot />
+        <div className="hidden md:block" aria-hidden="true" />
       </section>
       <AnimatedSection>
         <div className="max-w-4xl">
@@ -45,6 +60,10 @@ export default function HomePage() {
           ))}
         </div>
       </AnimatedSection>
+      <AboutSection />
+      <ResumeSection />
+      <PortfolioSection />
+      <ContactSection />
     </>
   );
 }

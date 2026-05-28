@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { getBaseCV } from "@/lib/cv";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://felipemejia.com";
 
@@ -24,12 +25,27 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const { contact, name, title } = getBaseCV();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    email: contact.email,
+    jobTitle: title,
+    name,
+    sameAs: [contact.linkedin.url, contact.github.url],
+    url: siteUrl,
+  };
+
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen bg-bg text-fg">
+        <script
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          type="application/ld+json"
+        />
+        <div className="min-h-screen bg-bg/80 text-fg">
           <SiteHeader />
-          <main>{children}</main>
+          <main className="relative z-10">{children}</main>
           <SiteFooter />
         </div>
       </body>

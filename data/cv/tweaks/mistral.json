@@ -1,0 +1,22 @@
+{
+  "slug": "mistral",
+  "title": "Mistral AI Product CV",
+  "application": "Mistral AI",
+  "summaryAdditions": [
+    "Emphasizes AI product strategy, workflow design, and analytics instrumentation for teams building with complex data systems."
+  ],
+  "skillAdditions": {
+    "Product": ["AI workflow design", "LLM product discovery"],
+    "Analytics/Ops": ["evaluation loops", "data quality instrumentation"]
+  },
+  "highlightOrder": {
+    "Spotz.pro": [
+      "Built an AI-powered multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X and Pinterest.",
+      "Shipped a unified dashboard for workflows + performance monitoring; introduced observability across channels."
+    ],
+    "Adamo Telecom": [
+      "Unified customer data across Salesforce and marketing stack for full-funnel visibility.",
+      "Introduced attribution modeling and recovered €200K+ in wasted spend; dashboards used in weekly C-level decisions."
+    ]
+  }
+}

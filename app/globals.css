@@ -8,9 +8,45 @@ html {
 }
 body {
   @apply bg-bg text-fg antialiased;
+  background:
+    linear-gradient(135deg, rgba(139, 92, 246, 0.13), transparent 34%),
+    linear-gradient(225deg, rgba(34, 211, 238, 0.09), transparent 38%),
+    linear-gradient(180deg, #040407 0%, #09090f 42%, #050508 100%);
+  letter-spacing: 0;
 }
 .section {
-  @apply w-full px-6 py-20 md:px-12 lg:px-24;
+  @apply relative w-full px-6 py-24 md:px-12 lg:px-24;
+}
+.section-surface::before {
+  content: "";
+  @apply pointer-events-none absolute inset-x-0 top-10 -z-10 h-3/4 opacity-60 blur-3xl;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.12), rgba(34, 211, 238, 0.08), transparent);
+}
+.eyebrow {
+  @apply text-sm font-medium uppercase text-accent2;
+}
+.section-title {
+  @apply mt-4 max-w-4xl text-4xl font-semibold leading-tight text-white md:text-6xl;
+}
+.glow-panel {
+  @apply relative border-l border-t border-white/10 bg-white/[0.025] p-6 shadow-[0_0_40px_rgba(139,92,246,0.09)] transition;
+}
+.glow-panel::before {
+  content: "";
+  @apply pointer-events-none absolute inset-x-0 -top-px h-px opacity-70;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.95), rgba(236, 72, 153, 0.3), transparent);
+}
+.glow-panel-cyan::before {
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.9), rgba(139, 92, 246, 0.35), transparent);
+}
+.line-item {
+  @apply border-l border-accent/70 pl-5 text-gray-300;
+}
+.line-item-cyan {
+  @apply border-accent2/70;
+}
+.metric-pill {
+  @apply border border-accent/30 bg-accent/10 px-3 py-1 text-xs text-purple-100 shadow-[0_0_18px_rgba(139,92,246,0.13)];
 }
 .nav-link {
   @apply relative w-fit py-1 text-sm text-gray-300 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
@@ -34,4 +70,7 @@ body {
 }
 .button-primary {
   @apply border border-accent bg-accent px-5 py-3 font-medium text-black transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
+}
+.button-secondary {
+  @apply border border-white/15 bg-white/[0.03] px-5 py-3 font-medium text-white transition hover:border-accent2 hover:text-accent2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent2;
 }

@@ -19,7 +19,7 @@ export default function LoginForm() {
         setPending(true);
 
         const form = new FormData(event.currentTarget);
-        const callbackUrl = searchParams.get("callbackUrl") || "/cv/product-manager";
+        const callbackUrl = searchParams.get("callbackUrl") || "/cv";
         const result = await signIn("credentials", {
           callbackUrl,
           password: String(form.get("password") || ""),

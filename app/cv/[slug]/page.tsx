@@ -1,12 +1,24 @@
 import { notFound } from "next/navigation";
 import { getCV, getCVSlugs } from "@/lib/content";
+import { getCombinedCV, getCVTweaks } from "@/lib/cv";
 import type { Metadata } from "next";
 
 export function generateStaticParams() {
-  return getCVSlugs().map((slug) => ({ slug }));
+  return [
+    ...getCVSlugs().map((slug) => ({ slug })),
+    ...getCVTweaks().map((tweak) => ({ slug: tweak.slug })),
+  ];
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const combined = getCombinedCV(params.slug);
+  if (combined) {
+    return {
+      title: combined.title,
+      description: combined.summary.join(" "),
+    };
+  }
+
   const cv = getCV(params.slug);
 
   return {
@@ -16,6 +28,48 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
 }
 
 export default function CVPage({ params }: { params: { slug: string } }) {
+  const combined = getCombinedCV(params.slug);
+  if (combined) {
+    return (
+      <section className="section">
+        <div className="max-w-4xl">
+          <p className="eyebrow">Tailored CV</p>
+          <h1 className="section-title">{combined.title}</h1>
+          <div className="mt-7 space-y-3 text-lg leading-8 text-gray-300">
+            {combined.summary.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          <a className="button-primary mt-8 inline-block" href={`/cv/${combined.slug}.pdf`}>
+            Download PDF
+          </a>
+        </div>
+
+        <section className="mt-14" aria-labelledby="cv-experience">
+          <h2 className="text-2xl font-semibold text-white" id="cv-experience">
+            Experience
+          </h2>
+          <div className="mt-6 space-y-9">
+            {combined.experience.map((item) => (
+              <article className="border-t border-white/10 pt-7" key={`${item.role}-${item.company}`}>
+                <h3 className="text-xl font-semibold text-white">
+                  {item.role} | {item.company}
+                </h3>
+                <ul className="mt-5 space-y-3">
+                  {item.bullets.map((bullet) => (
+                    <li className="line-item leading-7" key={bullet}>
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    );
+  }
+
   const cv = getCV(params.slug);
 
   if (!cv) {

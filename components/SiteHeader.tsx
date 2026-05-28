@@ -6,20 +6,29 @@ import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/resume", label: "Resume" },
+  { href: "/#about", label: "About" },
+  { href: "/#resume", label: "Resume" },
+  { href: "/#portfolio", label: "Portfolio" },
   { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#contact", label: "Contact" },
   { href: "/login", label: "Login" },
 ];
 
-function isActiveLink(pathname: string, href: string) {
-  return href === "/" ? pathname === href : pathname.startsWith(href);
+function isActiveLink(pathname: string, hash: string, href: string) {
+  if (href.startsWith("/#")) {
+    return pathname === "/" && hash === href.slice(1);
+  }
+
+  if (href === "/") {
+    return pathname === "/" && !hash;
+  }
+
+  return pathname.startsWith(href);
 }
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const [hash, setHash] = useState("");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -41,8 +50,15 @@ export default function SiteHeader() {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
+
   const renderLink = ({ href, label }: (typeof navItems)[number]) => {
-    const active = isActiveLink(pathname, href);
+    const active = isActiveLink(pathname, hash, href);
     return (
       <Link
         aria-current={active ? "page" : undefined}

@@ -1,30 +1,32 @@
 import Link from "next/link";
-
-const socialLinks = [
-  {
-    href: "https://fr.linkedin.com/in/felipemejiaosorio",
-    label: "LinkedIn profile for Felipe Mejia",
-    text: "LinkedIn",
-  },
-  {
-    href: "https://github.com/felipemejia",
-    label: "GitHub profile for Felipe Mejia",
-    text: "GitHub",
-  },
-  {
-    href: "mailto:felipe@felipemejia.com",
-    label: "Email Felipe Mejia",
-    text: "Email",
-  },
-];
+import { getBaseCV } from "@/lib/cv";
 
 export default function SiteFooter() {
+  const { contact } = getBaseCV();
+  const socialLinks = [
+    {
+      href: contact.linkedin.url,
+      label: contact.linkedin.label,
+      text: "LinkedIn",
+    },
+    {
+      href: contact.github.url,
+      label: contact.github.label,
+      text: "GitHub",
+    },
+    {
+      href: `mailto:${contact.email}`,
+      label: `Email ${contact.email}`,
+      text: contact.email,
+    },
+  ];
+
   return (
     <footer className="border-t border-white/10 px-6 py-10 text-sm text-gray-400 md:px-10">
       <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 md:flex-row md:items-center">
         <p>&copy; {new Date().getFullYear()} Felipe Mejia. All rights reserved.</p>
         <nav aria-label="Footer links" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link className="footer-link" href="/contact">
+          <Link className="footer-link" href="/#contact">
             Contact
           </Link>
           {socialLinks.map((link) => (
