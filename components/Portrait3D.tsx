@@ -1,26 +1,23 @@
 "use client";
 
+import { useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 type PortraitMode = "parallax" | "static" | "touch";
-type Vec3Tuple = [number, number, number];
 type LookTarget = { pitch: number; yaw: number };
+type PortraitGeometry = {
+  edgesGeometry: THREE.EdgesGeometry;
+  headGeometry: THREE.BufferGeometry;
+  pointsGeometry: THREE.BufferGeometry;
+};
 
-const WHITE = "#f7f8ff";
-const CYAN = "#9ff6ff";
-const PURPLE = "#b7a2ff";
-const PINK = "#ff9bcf";
-
-function clamp(value: number, min = 0, max = 1) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function smoothstep(edge0: number, edge1: number, value: number) {
-  const t = clamp((value - edge0) / (edge1 - edge0));
-  return t * t * (3 - 2 * t);
-}
+const MODEL_URL = "/portrait/felipe-bust.glb";
+const DEFAULT_LOOK: LookTarget = { pitch: 0.02, yaw: -0.52 };
+const WHITE = new THREE.Color("#f8fbff");
+const CYAN = new THREE.Color("#9ff6ff");
+const PURPLE = new THREE.Color("#b7a2ff");
 
 function canUseWebGL() {
   try {
@@ -59,13 +56,13 @@ function usePortraitMode() {
 
 function getSectionLookTarget(): LookTarget {
   const sections: { id: string; pitch: number; yaw: number }[] = [
-    { id: "about", pitch: 0.03, yaw: -0.28 },
-    { id: "resume", pitch: -0.06, yaw: -0.43 },
-    { id: "portfolio", pitch: 0.02, yaw: -0.35 },
-    { id: "contact", pitch: -0.09, yaw: -0.49 },
+    { id: "about", pitch: 0.02, yaw: -0.44 },
+    { id: "resume", pitch: -0.04, yaw: -0.62 },
+    { id: "portfolio", pitch: 0.0, yaw: -0.5 },
+    { id: "contact", pitch: -0.08, yaw: -0.66 },
   ];
 
-  let selected: LookTarget = { pitch: 0.02, yaw: -0.37 };
+  let selected = DEFAULT_LOOK;
   let closest = Number.POSITIVE_INFINITY;
   const viewportCenter = window.innerHeight * 0.5;
 
@@ -86,206 +83,121 @@ function getSectionLookTarget(): LookTarget {
   return selected;
 }
 
-function headPoint(v: number, theta: number): THREE.Vector3 {
-  const crossSection = Math.sin(Math.PI * v);
-  const y = 1.14 - v * 2.18;
-  const jawTaper = 1 - smoothstep(0.66, 0.98, v) * 0.34;
-  const crownTaper = 0.75 + smoothstep(0.04, 0.22, v) * 0.25;
-  const cheekPush = 1 + Math.exp(-((v - 0.49) ** 2) / 0.035) * 0.08;
-  const rx = 0.78 * crossSection * jawTaper * crownTaper * cheekPush;
-  const rz = 0.61 * crossSection * (0.82 + 0.18 * jawTaper);
-
-  return new THREE.Vector3(Math.sin(theta) * rx, y, Math.cos(theta) * rz);
+function getScrollProgress() {
+  const documentElement = document.documentElement;
+  const maxScroll = Math.max(documentElement.scrollHeight - window.innerHeight, 1);
+  return Math.min(1, Math.max(0, window.scrollY / maxScroll));
 }
 
-function neckPoint(v: number, theta: number): THREE.Vector3 {
-  const y = -0.96 - v * 0.92;
-  const taper = 1 - v * 0.12;
-  return new THREE.Vector3(Math.sin(theta) * 0.31 * taper, y, Math.cos(theta) * 0.25 * taper);
+function findHeadMesh(scene: THREE.Group) {
+  const meshes: THREE.Mesh[] = [];
+
+  scene.traverse((object) => {
+    const mesh = object as THREE.Mesh;
+    if (mesh.isMesh && mesh.geometry) {
+      meshes.push(mesh);
+    }
+  });
+
+  const namedMesh = meshes.find((mesh) => mesh.name === "FBHead" || mesh.geometry.name === "FBHead_mesh");
+  return namedMesh ?? meshes[0] ?? null;
 }
 
-function shoulderPoint(v: number, theta: number): THREE.Vector3 {
-  const y = -1.72 - v * 0.62 + Math.cos(theta) * 0.05;
-  const rx = 0.42 + v * 1.35;
-  const rz = 0.14 + v * 0.3;
-  return new THREE.Vector3(Math.sin(theta) * rx, y, Math.cos(theta) * rz - v * 0.14);
+function makePointGeometry(geometry: THREE.BufferGeometry) {
+  const sourcePositions = geometry.getAttribute("position") as THREE.BufferAttribute;
+  const sourceNormals = geometry.getAttribute("normal") as THREE.BufferAttribute | undefined;
+  const box = geometry.boundingBox ?? new THREE.Box3().setFromBufferAttribute(sourcePositions);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+
+  const stride = Math.max(1, Math.ceil(sourcePositions.count / 22000));
+  const pointCount = Math.ceil(sourcePositions.count / stride);
+  const positions = new Float32Array(pointCount * 3);
+  const colors = new Float32Array(pointCount * 3);
+  const color = new THREE.Color();
+  let cursor = 0;
+
+  for (let index = 0; index < sourcePositions.count; index += stride) {
+    const x = sourcePositions.getX(index);
+    const y = sourcePositions.getY(index);
+    const z = sourcePositions.getZ(index);
+    const nx = sourceNormals?.getX(index) ?? 0;
+    const ny = sourceNormals?.getY(index) ?? 0;
+    const nz = sourceNormals?.getZ(index) ?? 1;
+    const height = (y - box.min.y) / Math.max(size.y, 0.001);
+    const depth = (z - box.min.z) / Math.max(size.z, 0.001);
+    const centerBias = 1 - Math.min(1, Math.abs(x) / Math.max(size.x * 0.48, 0.001));
+    const frontBias = Math.max(0, depth * 0.78 + centerBias * 0.22);
+
+    color.copy(PURPLE).lerp(CYAN, Math.min(1, frontBias * 0.82));
+    color.lerp(WHITE, Math.min(0.72, depth * 0.46 + height * 0.18));
+    color.multiplyScalar(0.62 + frontBias * 0.55);
+
+    positions[cursor * 3] = x + nx * 0.008;
+    positions[cursor * 3 + 1] = y + ny * 0.008;
+    positions[cursor * 3 + 2] = z + nz * 0.008;
+    colors[cursor * 3] = color.r;
+    colors[cursor * 3 + 1] = color.g;
+    colors[cursor * 3 + 2] = color.b;
+    cursor += 1;
+  }
+
+  const pointsGeometry = new THREE.BufferGeometry();
+  pointsGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  pointsGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  pointsGeometry.computeBoundingSphere();
+  return pointsGeometry;
 }
 
-function createBustTopology() {
-  const linePositions: number[] = [];
-  const pointPositions: number[] = [];
+function createPortraitGeometry(scene: THREE.Group): PortraitGeometry {
+  const mesh = findHeadMesh(scene);
 
-  const addSegment = (a: THREE.Vector3, b: THREE.Vector3) => {
-    linePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
-  };
-
-  const addPoint = (point: THREE.Vector3) => {
-    pointPositions.push(point.x, point.y, point.z);
-  };
-
-  const thetaSegments = 72;
-  const headRows = 44;
-
-  for (let row = 2; row < headRows - 1; row += 1) {
-    const v = row / (headRows - 1);
-    let previous = headPoint(v, -Math.PI);
-    for (let column = 1; column <= thetaSegments; column += 1) {
-      const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
-      const point = headPoint(v, theta);
-      addSegment(previous, point);
-      previous = point;
-      if (column % 2 === 0) {
-        addPoint(point);
-      }
-    }
+  if (!mesh) {
+    throw new Error("No mesh found in portrait GLB.");
   }
 
-  for (let column = 0; column < thetaSegments; column += 4) {
-    const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
-    let previous = headPoint(0.05, theta);
-    for (let row = 3; row < headRows - 2; row += 1) {
-      const point = headPoint(row / (headRows - 1), theta);
-      addSegment(previous, point);
-      previous = point;
-      addPoint(point);
-    }
-  }
+  const headGeometry = mesh.geometry.clone();
+  headGeometry.computeVertexNormals();
 
-  const neckRows = 14;
-  for (let row = 0; row < neckRows; row += 1) {
-    const v = row / (neckRows - 1);
-    let previous = neckPoint(v, -Math.PI);
-    for (let column = 1; column <= thetaSegments; column += 1) {
-      const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
-      const point = neckPoint(v, theta);
-      addSegment(previous, point);
-      previous = point;
-      if (column % 3 === 0) {
-        addPoint(point);
-      }
-    }
-  }
+  const positionAttribute = headGeometry.getAttribute("position") as THREE.BufferAttribute;
+  const box = new THREE.Box3().setFromBufferAttribute(positionAttribute);
+  const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
+  box.getCenter(center);
+  box.getSize(size);
 
-  for (let column = 0; column < thetaSegments; column += 6) {
-    const theta = -Math.PI + (column / thetaSegments) * Math.PI * 2;
-    let previous = neckPoint(0, theta);
-    for (let row = 1; row < neckRows; row += 1) {
-      const point = neckPoint(row / (neckRows - 1), theta);
-      addSegment(previous, point);
-      previous = point;
-    }
-  }
-
-  const shoulderRows = 12;
-  for (let row = 0; row < shoulderRows; row += 1) {
-    const v = row / (shoulderRows - 1);
-    let previous = shoulderPoint(v, -Math.PI * 0.92);
-    for (let column = 1; column <= thetaSegments; column += 1) {
-      const theta = -Math.PI * 0.92 + (column / thetaSegments) * Math.PI * 1.84;
-      const point = shoulderPoint(v, theta);
-      addSegment(previous, point);
-      previous = point;
-      if (column % 4 === 0) {
-        addPoint(point);
-      }
-    }
-  }
-
-  for (let column = 3; column < thetaSegments - 3; column += 7) {
-    const theta = -Math.PI * 0.82 + (column / thetaSegments) * Math.PI * 1.64;
-    let previous = shoulderPoint(0, theta);
-    for (let row = 1; row < shoulderRows; row += 1) {
-      const point = shoulderPoint(row / (shoulderRows - 1), theta);
-      addSegment(previous, point);
-      previous = point;
-    }
-  }
+  const targetHeight = 2.86;
+  const scale = targetHeight / Math.max(size.y, 0.001);
+  headGeometry.translate(-center.x, -center.y, -center.z);
+  headGeometry.scale(scale, scale, scale);
+  headGeometry.computeVertexNormals();
+  headGeometry.computeBoundingBox();
+  headGeometry.computeBoundingSphere();
 
   return {
-    lines: new Float32Array(linePositions),
-    points: new Float32Array(pointPositions),
+    edgesGeometry: new THREE.EdgesGeometry(headGeometry, 24),
+    headGeometry,
+    pointsGeometry: makePointGeometry(headGeometry),
   };
 }
 
-function createBufferGeometry(attribute: Float32Array) {
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(attribute, 3));
-  geometry.computeBoundingSphere();
-  return geometry;
-}
-
-function ellipsePoints(
-  center: Vec3Tuple,
-  radiusX: number,
-  radiusY: number,
-  zRadius = 0,
-  start = 0,
-  end = Math.PI * 2,
-  count = 72,
-): Vec3Tuple[] {
-  const points: Vec3Tuple[] = [];
-  for (let index = 0; index <= count; index += 1) {
-    const t = start + (index / count) * (end - start);
-    points.push([
-      center[0] + Math.cos(t) * radiusX,
-      center[1] + Math.sin(t) * radiusY,
-      center[2] + Math.sin(t) * zRadius,
-    ]);
-  }
-  return points;
-}
-
-function earPoints(side: -1 | 1): Vec3Tuple[] {
-  return ellipsePoints([side * 0.72, 0.28, 0.02], 0.06, 0.22, 0.11, -Math.PI * 0.8, Math.PI * 0.8, 44);
-}
-
-function FeatureCurve({
-  color = WHITE,
-  opacity = 0.7,
-  points,
-  radius = 0.008,
-}: {
-  color?: string;
-  opacity?: number;
-  points: Vec3Tuple[];
-  radius?: number;
-}) {
-  const geometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3(points.map((point) => new THREE.Vector3(...point)));
-    return new THREE.TubeGeometry(curve, Math.max(24, points.length * 3), radius, 8, false);
-  }, [points, radius]);
-
-  useEffect(() => {
-    return () => geometry.dispose();
-  }, [geometry]);
-
-  return (
-    <mesh geometry={geometry}>
-      <meshBasicMaterial
-        blending={THREE.AdditiveBlending}
-        color={color}
-        depthWrite={false}
-        opacity={opacity}
-        transparent
-      />
-    </mesh>
-  );
-}
-
-function Bust({ mode }: { mode: PortraitMode }) {
+function GlbBust({ mode }: { mode: PortraitMode }) {
+  const { scene } = useGLTF(MODEL_URL);
   const groupRef = useRef<THREE.Group>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const sectionRef = useRef<LookTarget>({ pitch: 0.02, yaw: -0.37 });
-  const topology = useMemo(() => createBustTopology(), []);
-  const lineGeometry = useMemo(() => createBufferGeometry(topology.lines), [topology.lines]);
-  const pointGeometry = useMemo(() => createBufferGeometry(topology.points), [topology.points]);
+  const sectionRef = useRef<LookTarget>(DEFAULT_LOOK);
+  const scrollRef = useRef(0);
+
+  const portraitGeometry = useMemo(() => createPortraitGeometry(scene), [scene]);
 
   useEffect(() => {
     return () => {
-      lineGeometry.dispose();
-      pointGeometry.dispose();
+      portraitGeometry.headGeometry.dispose();
+      portraitGeometry.pointsGeometry.dispose();
+      portraitGeometry.edgesGeometry.dispose();
     };
-  }, [lineGeometry, pointGeometry]);
+  }, [portraitGeometry]);
 
   useEffect(() => {
     let frame = 0;
@@ -320,23 +232,24 @@ function Bust({ mode }: { mode: PortraitMode }) {
   useEffect(() => {
     let frame = 0;
 
-    function updateSectionTarget() {
+    function updateMotionTarget() {
       if (frame) {
         return;
       }
 
       frame = window.requestAnimationFrame(() => {
         sectionRef.current = getSectionLookTarget();
+        scrollRef.current = getScrollProgress();
         frame = 0;
       });
     }
 
-    updateSectionTarget();
-    window.addEventListener("scroll", updateSectionTarget, { passive: true });
-    window.addEventListener("resize", updateSectionTarget);
+    updateMotionTarget();
+    window.addEventListener("scroll", updateMotionTarget, { passive: true });
+    window.addEventListener("resize", updateMotionTarget);
     return () => {
-      window.removeEventListener("scroll", updateSectionTarget);
-      window.removeEventListener("resize", updateSectionTarget);
+      window.removeEventListener("scroll", updateMotionTarget);
+      window.removeEventListener("resize", updateMotionTarget);
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
@@ -344,88 +257,138 @@ function Bust({ mode }: { mode: PortraitMode }) {
   }, []);
 
   useFrame((state) => {
-    if (!groupRef.current) {
+    const group = groupRef.current;
+    if (!group) {
       return;
     }
 
     const pointer = pointerRef.current;
-    pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.055);
-    pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.055);
+    pointer.x = THREE.MathUtils.lerp(pointer.x, mode === "static" ? 0 : pointer.targetX, 0.06);
+    pointer.y = THREE.MathUtils.lerp(pointer.y, mode === "static" ? 0 : pointer.targetY, 0.06);
 
-    const active = mode === "static" ? { pitch: 0.02, yaw: -0.34 } : sectionRef.current;
-    const targetYaw = active.yaw + pointer.x * 0.17;
-    const targetPitch = active.pitch - pointer.y * 0.1;
+    const active = mode === "static" ? DEFAULT_LOOK : sectionRef.current;
+    const scrollDepth = mode === "static" ? 0 : (scrollRef.current - 0.42) * 0.34;
     const elapsed = state.clock.elapsedTime;
+    const targetYaw = active.yaw + pointer.x * 0.19;
+    const targetPitch = active.pitch - pointer.y * 0.095;
 
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetYaw, 0.055);
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetPitch, 0.055);
-    groupRef.current.rotation.z = Math.sin(elapsed * 0.22) * 0.012 + pointer.x * 0.012;
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, pointer.x * 0.04, 0.045);
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, -pointer.y * 0.025, 0.045);
-    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.09, 0.035);
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.07, 0.035);
-    state.camera.lookAt(0, -0.18, 0);
+    group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetYaw, 0.055);
+    group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetPitch, 0.055);
+    group.rotation.z = Math.sin(elapsed * 0.18) * 0.008 + pointer.x * 0.009;
+    group.position.x = THREE.MathUtils.lerp(group.position.x, pointer.x * 0.035 + 0.24, 0.045);
+    group.position.y = THREE.MathUtils.lerp(group.position.y, -pointer.y * 0.022 - 0.16, 0.045);
+    group.position.z = THREE.MathUtils.lerp(group.position.z, scrollDepth, 0.035);
+
+    if (glowRef.current) {
+      glowRef.current.rotation.copy(group.rotation);
+      glowRef.current.position.copy(group.position);
+      const pulse = 1.015 + Math.sin(elapsed * 0.45) * 0.004;
+      glowRef.current.scale.setScalar(pulse);
+    }
+
+    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.06, 0.035);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -pointer.y * 0.055, 0.035);
+    state.camera.lookAt(0.06, -0.22, 0);
   });
 
   return (
-    <group ref={groupRef} position={[0.1, 0.08, 0]} scale={0.94}>
-      <lineSegments geometry={lineGeometry}>
-        <lineBasicMaterial
-          blending={THREE.AdditiveBlending}
-          color={WHITE}
-          depthWrite={false}
-          opacity={0.16}
-          transparent
-        />
-      </lineSegments>
-      <points geometry={pointGeometry}>
-        <pointsMaterial
-          blending={THREE.AdditiveBlending}
-          color={WHITE}
-          depthWrite={false}
-          opacity={0.28}
-          size={0.012}
-          sizeAttenuation
-          transparent
-        />
-      </points>
+    <>
+      <ambientLight intensity={0.85} />
+      <pointLight color="#b7a2ff" intensity={1.4} position={[1.7, 1.4, 2.3]} />
+      <pointLight color="#9ff6ff" intensity={0.85} position={[-1.5, -0.2, 2.6]} />
 
-      <FeatureCurve color={PURPLE} opacity={0.82} radius={0.007} points={ellipsePoints([-0.28, 0.43, 0.56], 0.21, 0.115, 0.02)} />
-      <FeatureCurve color={PURPLE} opacity={0.82} radius={0.007} points={ellipsePoints([0.28, 0.43, 0.56], 0.21, 0.115, 0.02)} />
-      <FeatureCurve color={WHITE} opacity={0.7} radius={0.006} points={[[-0.075, 0.43, 0.57], [-0.03, 0.405, 0.6], [0.03, 0.405, 0.6], [0.075, 0.43, 0.57]]} />
-      <FeatureCurve color={CYAN} opacity={0.78} radius={0.006} points={[[-0.39, 0.45, 0.59], [-0.28, 0.47, 0.62], [-0.17, 0.45, 0.59]]} />
-      <FeatureCurve color={CYAN} opacity={0.78} radius={0.006} points={[[0.17, 0.45, 0.59], [0.28, 0.47, 0.62], [0.39, 0.45, 0.59]]} />
-      <FeatureCurve color={WHITE} opacity={0.82} radius={0.008} points={[[0.0, 0.6, 0.55], [0.03, 0.44, 0.71], [0.0, 0.25, 0.83], [-0.06, 0.2, 0.69]]} />
-      <FeatureCurve color={WHITE} opacity={0.62} radius={0.005} points={[[0.06, 0.2, 0.69], [0.13, 0.205, 0.62], [0.18, 0.18, 0.58]]} />
-      <FeatureCurve color={PINK} opacity={0.62} radius={0.006} points={[[-0.21, 0.04, 0.55], [-0.08, 0.02, 0.61], [0, 0.025, 0.63], [0.08, 0.02, 0.61], [0.21, 0.04, 0.55]]} />
-      <FeatureCurve color={PURPLE} opacity={0.66} radius={0.01} points={[[-0.44, 0.08, 0.43], [-0.36, -0.23, 0.56], [-0.14, -0.43, 0.63], [0, -0.48, 0.65], [0.14, -0.43, 0.63], [0.36, -0.23, 0.56], [0.44, 0.08, 0.43]]} />
-      <FeatureCurve color={PURPLE} opacity={0.58} radius={0.009} points={[[-0.54, 0.74, 0.34], [-0.32, 0.86, 0.53], [0, 0.9, 0.6], [0.32, 0.86, 0.53], [0.54, 0.74, 0.34]]} />
-      <FeatureCurve color={WHITE} opacity={0.52} radius={0.006} points={earPoints(-1)} />
-      <FeatureCurve color={WHITE} opacity={0.52} radius={0.006} points={earPoints(1)} />
-
-      <mesh position={[0, 0.24, 0.84]}>
-        <sphereGeometry args={[0.028, 18, 18]} />
+      <mesh ref={glowRef} geometry={portraitGeometry.headGeometry}>
         <meshBasicMaterial
           blending={THREE.AdditiveBlending}
-          color={WHITE}
+          color="#8b5cf6"
           depthWrite={false}
-          opacity={0.9}
+          opacity={0.035}
+          side={THREE.BackSide}
           transparent
         />
       </mesh>
-    </group>
+
+      <group ref={groupRef} scale={0.91}>
+        <mesh geometry={portraitGeometry.headGeometry}>
+          <meshStandardMaterial
+            color="#dfe7ff"
+            emissive="#8b5cf6"
+            emissiveIntensity={0.18}
+            metalness={0.08}
+            opacity={0.075}
+            roughness={0.34}
+            transparent
+            depthWrite={false}
+          />
+        </mesh>
+
+        <mesh geometry={portraitGeometry.headGeometry}>
+          <meshBasicMaterial
+            blending={THREE.AdditiveBlending}
+            color="#f8fbff"
+            depthWrite={false}
+            opacity={0.08}
+            transparent
+            wireframe
+          />
+        </mesh>
+
+        <lineSegments geometry={portraitGeometry.edgesGeometry}>
+          <lineBasicMaterial
+            blending={THREE.AdditiveBlending}
+            color="#ffffff"
+            depthWrite={false}
+            opacity={0.24}
+            transparent
+          />
+        </lineSegments>
+
+        <points geometry={portraitGeometry.pointsGeometry}>
+          <pointsMaterial
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            opacity={0.72}
+            size={0.0075}
+            sizeAttenuation
+            transparent
+            vertexColors
+          />
+        </points>
+
+        <mesh position={[0, 0.02, 0.95]}>
+          <sphereGeometry args={[0.018, 18, 18]} />
+          <meshBasicMaterial
+            blending={THREE.AdditiveBlending}
+            color="#f8fbff"
+            depthWrite={false}
+            opacity={0.76}
+            transparent
+          />
+        </mesh>
+      </group>
+    </>
   );
 }
 
-function VisualFallback({ label = "Abstract portrait visual" }: { label?: string }) {
+function CanvasFallback() {
+  return (
+    <div
+      aria-label="Loading Felipe Mejia wireframe portrait"
+      className="absolute inset-0 opacity-70 [background-image:radial-gradient(circle,rgba(248,251,255,0.72)_1px,transparent_1.5px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_at_67%_46%,black_18%,transparent_62%)]"
+      role="img"
+    />
+  );
+}
+
+function VisualFallback({ label = "Felipe Mejia wireframe portrait fallback" }: { label?: string }) {
   return (
     <div
       aria-label={label}
-      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full overflow-hidden opacity-70 md:w-[62vw]"
+      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full overflow-hidden opacity-70 md:w-[56vw]"
       role="img"
     >
-      <div className="absolute inset-8 opacity-80 [background-image:radial-gradient(circle,rgba(247,248,255,0.7)_1px,transparent_1.5px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_at_center,black_24%,transparent_70%)]" />
-      <div className="absolute inset-16 opacity-55 [background-image:radial-gradient(circle,rgba(159,246,255,0.8)_1px,transparent_1.5px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_center,black_18%,transparent_68%)]" />
+      <div className="absolute inset-8 opacity-80 [background-image:radial-gradient(circle,rgba(247,248,255,0.7)_1px,transparent_1.5px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_at_70%_45%,black_20%,transparent_68%)]" />
+      <div className="absolute inset-16 opacity-55 [background-image:radial-gradient(circle,rgba(159,246,255,0.8)_1px,transparent_1.5px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_70%_45%,black_16%,transparent_66%)]" />
     </div>
   );
 }
@@ -439,22 +402,26 @@ export default function Portrait3D() {
   }, []);
 
   if (!webGLSupported) {
-    return <VisualFallback label="Abstract wireframe portrait fallback for environments without WebGL" />;
+    return <VisualFallback />;
   }
 
   return (
     <div
-      aria-label="Reactive wireframe bust portrait"
-      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full opacity-90 [mask-image:linear-gradient(to_left,black_48%,rgba(0,0,0,0.8)_74%,transparent_100%)] md:w-[62vw]"
+      aria-label="Reactive GLB wireframe portrait of Felipe Mejia"
+      className="pointer-events-none fixed inset-y-0 right-0 z-0 h-screen w-full overflow-hidden opacity-95 [mask-image:linear-gradient(to_left,black_46%,rgba(0,0,0,0.74)_72%,transparent_100%)] md:w-[56vw]"
       role="img"
     >
-      <Canvas
-        camera={{ position: [0, -0.06, 4.45], fov: 36 }}
-        dpr={[1, 1.55]}
-        gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-      >
-        <Bust mode={mode} />
-      </Canvas>
+      <Suspense fallback={<CanvasFallback />}>
+        <Canvas
+          camera={{ position: [0, -0.02, 4.72], fov: 33 }}
+          dpr={[1, 1.65]}
+          gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+        >
+          <GlbBust mode={mode} />
+        </Canvas>
+      </Suspense>
     </div>
   );
 }
+
+useGLTF.preload(MODEL_URL);
