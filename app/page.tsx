@@ -1,17 +1,15 @@
-import FloatingSettings from "@/components/FloatingSettings";
-import HomeJourney from "@/components/HomeJourney";
-import PortraitSlot from "@/components/PortraitSlot";
+import SignalEntry from "@/components/SignalEntry";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AI Product & Growth Consultant",
+  title: "Felipe Mejia | Product, Growth & AI Systems",
   description:
-    "Felipe Mejia helps SaaS, AI, telecom, and digital growth teams build agentic workflows, ship 0 to 1 products, instrument analytics, and create measurable growth systems.",
+    "Felipe Mejia builds AI-enabled products and growth systems. 12+ years from 0→1 across telecoms, SaaS and e-commerce. Product, growth and AI consulting.",
   keywords: [
     "AI product consultant",
+    "growth product manager",
     "agentic workflows",
     "AI workflow automation",
-    "growth product consultant",
     "product analytics consultant",
     "0 to 1 product builder",
     "SaaS growth strategy",
@@ -20,11 +18,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <>
-      <PortraitSlot />
-      <FloatingSettings />
-      <HomeJourney />
-    </>
-  );
+  return <SignalEntry />;
 }

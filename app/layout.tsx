@@ -1,8 +1,9 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import SiteFooter from "@/components/SiteFooter";
+import LayoutShell from "@/components/LayoutShell";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { getBaseCV } from "@/lib/cv";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://felipemejia.com";
@@ -111,13 +112,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           type="application/ld+json"
         />
-        <div className="site-shell">
-          <SiteHeader />
-          <main className="relative z-10">{children}</main>
-          <div className="relative z-10">
-            <SiteFooter />
-          </div>
-        </div>
+        <LayoutShell header={<SiteHeader />} footer={<SiteFooter />}>
+          {children}
+        </LayoutShell>
       </body>
     </html>
   );
