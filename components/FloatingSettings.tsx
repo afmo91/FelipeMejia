@@ -34,7 +34,7 @@ export default function FloatingSettings() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 md:hidden">
+    <div className="fixed bottom-5 right-5 z-40 hidden">
       <button
         aria-controls="portrait-settings"
         aria-expanded={open}

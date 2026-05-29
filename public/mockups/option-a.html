@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A – Rail Station</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #050508;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #e8e8f0;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scene {
+    width: 900px;
+    height: 600px;
+    position: relative;
+    background: linear-gradient(135deg, rgba(139,92,246,0.12), transparent 40%),
+                linear-gradient(225deg, rgba(34,211,238,0.08), transparent 40%),
+                #050508;
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+
+  /* Grid dots background */
+  .scene::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(139,92,246,0.25) 1px, transparent 1px),
+                      radial-gradient(circle, rgba(34,211,238,0.18) 1px, transparent 1px);
+    background-size: 60px 60px, 90px 90px;
+    background-position: 0 0, 30px 45px;
+    opacity: 0.4;
+  }
+
+  /* Label */
+  .label {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(34,211,238,0.7);
+    border: 1px solid rgba(34,211,238,0.2);
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.4);
+  }
+
+  /* ---- RAIL ---- */
+  .rail-wrap {
+    position: absolute;
+    left: 50%;
+    top: 60px;
+    bottom: 40px;
+    transform: translateX(-50%);
+    width: 40px;
+  }
+
+  /* Two rail lines in perspective */
+  .rail-left, .rail-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg,
+      transparent,
+      rgba(139,92,246,0.5) 15%,
+      rgba(139,92,246,0.7) 50%,
+      rgba(34,211,238,0.6) 80%,
+      transparent
+    );
+  }
+  .rail-left { left: 10px; }
+  .rail-right { right: 10px; }
+
+  /* Sleepers (cross ties) */
+  .sleeper {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    height: 2px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 1px;
+  }
+
+  /* Stations */
+  .station {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 500px;
+  }
+  .station.left { flex-direction: row-reverse; justify-content: flex-end; margin-left: -250px; }
+  .station.right { flex-direction: row; justify-content: flex-start; margin-left: 0; }
+
+  .station-dot {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(139,92,246,0.8);
+    background: #050508;
+    border-radius: 0;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .station-dot.active {
+    background: #22d3ee;
+    border-color: #22d3ee;
+    box-shadow: 0 0 20px rgba(34,211,238,0.9), 0 0 40px rgba(34,211,238,0.4);
+  }
+
+  .station-board {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(139,92,246,0.25);
+    border-left: 3px solid rgba(139,92,246,0.7);
+    padding: 10px 14px;
+    max-width: 200px;
+  }
+  .station-board.active {
+    border-left-color: #22d3ee;
+    border-color: rgba(34,211,238,0.4);
+    background: rgba(34,211,238,0.04);
+  }
+  .station-name {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(34,211,238,0.8);
+    margin-bottom: 4px;
+  }
+  .station-desc {
+    font-size: 12px;
+    color: rgba(220,220,240,0.85);
+    line-height: 1.5;
+    font-family: -apple-system, sans-serif;
+  }
+  .station-board.active .station-desc { color: #fff; }
+
+  /* 3D BUST — train window frame */
+  .bust-wrap {
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200px;
+    height: 260px;
+  }
+  .window-frame {
+    position: absolute;
+    inset: 0;
+    border: 2px solid rgba(139,92,246,0.4);
+    border-radius: 60px 60px 40px 40px;
+    background: rgba(20,10,40,0.6);
+    box-shadow:
+      0 0 40px rgba(139,92,246,0.2),
+      inset 0 0 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .window-frame::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1px solid rgba(34,211,238,0.15);
+  }
+  /* Bust dots placeholder */
+  .bust-dots {
+    width: 120px;
+    height: 160px;
+    background-image: radial-gradient(circle, rgba(159,246,255,0.7) 1px, transparent 1px),
+                      radial-gradient(circle, rgba(183,162,255,0.5) 1px, transparent 1px);
+    background-size: 8px 8px, 12px 12px;
+    background-position: 0 0, 4px 6px;
+    mask-image: radial-gradient(ellipse at 50% 40%, black 30%, rgba(0,0,0,0.6) 55%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, rgba(0,0,0,0.6) 55%, transparent 75%);
+  }
+  /* Corner rivets on frame */
+  .rivet {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1px solid rgba(139,92,246,0.5);
+    background: rgba(0,0,0,0.8);
+  }
+  .rivet.tl { top: 16px; left: 16px; }
+  .rivet.tr { top: 16px; right: 16px; }
+  .rivet.bl { bottom: 16px; left: 16px; }
+  .rivet.br { bottom: 16px; right: 16px; }
+
+  /* Train cab bottom */
+  .train-cab {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 24px;
+    background: rgba(20,10,40,0.8);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .cab-light {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #22d3ee;
+    box-shadow: 0 0 8px rgba(34,211,238,0.9);
+    animation: blink 2s ease-in-out infinite;
+  }
+  .cab-label {
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(34,211,238,0.6);
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Progress bar at bottom */
+  .progress-bar {
+    position: absolute;
+    bottom: 16px;
+    left: 40px;
+    right: 280px;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+  }
+  .progress-fill {
+    width: 42%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(139,92,246,0.9), rgba(34,211,238,0.8));
+    box-shadow: 0 0 8px rgba(34,211,238,0.5);
+  }
+  .progress-label {
+    position: absolute;
+    bottom: 24px;
+    left: 40px;
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(139,92,246,0.7);
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="label">Option A — Rail Station</div>
+
+  <!-- Rail -->
+  <div class="rail-wrap">
+    <div class="rail-left"></div>
+    <div class="rail-right"></div>
+    <!-- Sleepers -->
+    <div class="sleeper" style="top:8%"></div>
+    <div class="sleeper" style="top:18%"></div>
+    <div class="sleeper" style="top:28%"></div>
+    <div class="sleeper" style="top:38%"></div>
+    <div class="sleeper" style="top:48%"></div>
+    <div class="sleeper" style="top:58%"></div>
+    <div class="sleeper" style="top:68%"></div>
+    <div class="sleeper" style="top:78%"></div>
+    <div class="sleeper" style="top:88%"></div>
+  </div>
+
+  <!-- Stations (left side) -->
+  <div class="station left" style="top: 80px;">
+    <div class="station-dot"></div>
+    <div class="station-board">
+      <div class="station-name">Station 01</div>
+      <div class="station-desc">What I Do</div>
+    </div>
+  </div>
+
+  <div class="station right" style="top: 190px;">
+    <div class="station-dot"></div>
+    <div class="station-board">
+      <div class="station-name">Station 02</div>
+      <div class="station-desc">How I Help</div>
+    </div>
+  </div>
+
+  <div class="station left" style="top: 290px;">
+    <div class="station-dot active"></div>
+    <div class="station-board active">
+      <div class="station-name">Station 03 · Active</div>
+      <div class="station-desc">AI Signal Lab</div>
+    </div>
+  </div>
+
+  <div class="station right" style="top: 390px;">
+    <div class="station-dot"></div>
+    <div class="station-board">
+      <div class="station-name">Station 04</div>
+      <div class="station-desc">Results</div>
+    </div>
+  </div>
+
+  <div class="station left" style="top: 490px;">
+    <div class="station-dot"></div>
+    <div class="station-board">
+      <div class="station-name">Station 05</div>
+      <div class="station-desc">Experience</div>
+    </div>
+  </div>
+
+  <!-- 3D Bust (train window) -->
+  <div class="bust-wrap">
+    <div class="window-frame">
+      <div class="bust-dots"></div>
+      <div class="rivet tl"></div>
+      <div class="rivet tr"></div>
+      <div class="rivet bl"></div>
+      <div class="rivet br"></div>
+    </div>
+    <div class="train-cab">
+      <div class="cab-light"></div>
+      <div class="cab-label">Felipe · Driver</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-label">Journey progress</div>
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+</body>
+</html>

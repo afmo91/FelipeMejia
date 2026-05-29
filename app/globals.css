@@ -118,21 +118,104 @@ body {
   @apply absolute left-0 top-3 h-2 w-2 bg-accent2 shadow-[0_0_18px_rgba(34,211,238,0.7)];
 }
 .journey-shell {
-  --journey-line-x: 50%;
   @apply relative z-10;
 }
+/* Left PCB rail */
 .journey-shell::before {
   content: "";
   position: absolute;
   bottom: 5rem;
-  left: var(--journey-line-x);
+  left: calc(50% - 7px);
   top: 6rem;
   width: 1px;
-  transform: translateX(-0.5px);
-  background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.95), rgba(34, 211, 238, 0.82), transparent);
-  box-shadow: 0 0 34px rgba(139, 92, 246, 0.38);
-  transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.45) 10%,
+    rgba(139, 92, 246, 0.75) 45%,
+    rgba(34, 211, 238, 0.7) 72%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
 }
+/* Right PCB rail */
+.journey-shell::after {
+  content: "";
+  position: absolute;
+  bottom: 5rem;
+  left: calc(50% + 6px);
+  top: 6rem;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.32) 10%,
+    rgba(139, 92, 246, 0.55) 45%,
+    rgba(34, 211, 238, 0.5) 72%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+/* Scan pulse track */
+.spine-pulse-track {
+  position: absolute;
+  left: calc(50% - 14px);
+  width: 28px;
+  top: 6rem;
+  bottom: 5rem;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+.spine-pulse {
+  position: absolute;
+  top: 0;
+  left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.45) 50%, transparent);
+  animation: spine-scan 4.5s ease-in-out infinite;
+}
+@keyframes spine-scan {
+  0%   { transform: translateY(-90px); opacity: 0; }
+  6%   { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateY(2000px); opacity: 0; }
+}
+/* HUD bar */
+.journey-hud {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  padding: 14px 24px;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.journey-hud > span {
+  font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(139, 92, 246, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+.journey-hud-live {
+  color: rgba(34, 211, 238, 0.85) !important;
+  border-color: rgba(34, 211, 238, 0.25) !important;
+}
+.journey-hud-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 6px rgba(34, 211, 238, 0.9);
+  margin-right: 5px;
+  vertical-align: middle;
+  animation: hud-blink 1.4s ease-in-out infinite;
+}
+@keyframes hud-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
 .journey-stage {
   @apply relative grid min-h-screen items-center gap-8 px-6 py-28 md:px-12 lg:px-24;
   grid-template-columns: minmax(0, 1fr) minmax(80px, 12vw) minmax(0, 1fr);
@@ -156,39 +239,57 @@ body {
 .journey-content-active {
   filter: drop-shadow(0 0 36px rgba(139, 92, 246, 0.12));
 }
+/* Diamond waypoint on the spine */
 .journey-marker {
   position: absolute;
-  left: var(--journey-line-x);
+  left: 50%;
   top: 50%;
   z-index: 12;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  max-width: 12rem;
-  transform: translate(-50%, -50%) scale(0.9);
-  color: rgba(216, 204, 255, 0.62);
-  transition:
-    left 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 300ms ease,
-    transform 300ms ease;
+  gap: 7px;
+  transform: translate(-50%, -50%);
 }
 .journey-marker::before {
   content: "";
-  width: 0.85rem;
-  height: 0.85rem;
-  background: rgba(139, 92, 246, 0.86);
-  box-shadow: 0 0 28px rgba(139, 92, 246, 0.85);
+  display: block;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid rgba(139, 92, 246, 0.65);
+  background: #050508;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  transition: all 300ms ease;
 }
-.journey-marker span {
-  @apply font-mono text-xs uppercase tracking-[0.16em];
+.journey-marker-phase {
+  font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(139, 92, 246, 0.55);
+  transition: color 300ms ease;
+  line-height: 1;
 }
-.journey-marker-active {
-  color: #f8fbff;
-  transform: translate(-50%, -50%) scale(1.06);
+.journey-marker-label {
+  font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 7px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(180, 170, 220, 0.38);
+  white-space: nowrap;
+  transition: color 300ms ease;
+  line-height: 1;
 }
 .journey-marker-active::before {
   background: #22d3ee;
-  box-shadow: 0 0 36px rgba(34, 211, 238, 0.95);
+  border-color: #22d3ee;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.9), 0 0 36px rgba(34, 211, 238, 0.35);
+}
+.journey-marker-active .journey-marker-phase {
+  color: rgba(34, 211, 238, 0.9);
+}
+.journey-marker-active .journey-marker-label {
+  color: rgba(255, 255, 255, 0.72);
 }
 .nav-link {
   @apply relative w-fit py-1 text-sm text-gray-300 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;
@@ -338,16 +439,76 @@ body {
 .ask-felipe-answer {
   @apply mt-4 max-h-56 space-y-3 overflow-y-auto border-t border-white/10 pt-4 text-sm leading-6 text-gray-300;
 }
+/* Conversation thread */
+.ask-felipe-thread {
+  @apply space-y-4 overflow-y-auto;
+  max-height: 52vh;
+}
+.af-who {
+  @apply mb-1 block font-mono text-[0.65rem] uppercase tracking-[0.18em] text-gray-500;
+}
+.af-who-felipe {
+  @apply text-accent2;
+}
+.af-question {
+  @apply border-l-2 border-white/20 bg-white/[0.03] px-3 py-2.5 text-sm text-gray-200;
+}
+.af-answer {
+  @apply space-y-2 border-l-2 border-accent2/50 bg-black/25 px-3 py-3 text-sm leading-6 text-gray-300;
+}
+.af-loading {
+  @apply flex gap-1.5 py-1;
+}
+.af-loading span {
+  @apply h-1.5 w-1.5 rounded-full bg-accent2/60;
+  animation: af-dot 1.2s ease-in-out infinite;
+}
+.af-loading span:nth-child(2) { animation-delay: 0.2s; }
+.af-loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes af-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); }
+}
+.af-stages {
+  @apply mt-3 flex flex-wrap gap-1.5 border-t border-white/10 pt-3;
+}
+.af-stages span {
+  @apply border border-accent/20 bg-accent/[0.07] px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-[0.13em] text-purple-300;
+}
+.af-actions {
+  @apply mt-4 flex flex-wrap gap-3 border-t border-white/10 pt-3;
+}
+.af-action-primary {
+  @apply text-sm text-accent transition hover:text-white;
+}
+.af-action-secondary {
+  @apply text-sm text-gray-500 transition hover:text-gray-300;
+}
 
 @media (max-width: 767px) {
   .journey-shell::before {
-    left: 1.5rem;
+    left: 1.25rem;
+  }
+  .journey-shell::after {
+    left: calc(1.25rem + 13px);
+  }
+  .spine-pulse-track {
+    left: calc(1.25rem - 6px);
+  }
+  .journey-hud {
+    padding: 10px 12px;
+    gap: 5px;
+  }
+  .journey-hud > span {
+    font-size: 7px;
+    padding: 2px 7px;
   }
   .journey-stage {
     display: block;
     min-height: auto;
     padding-bottom: 5rem;
-    padding-left: 3.75rem;
+    padding-left: 3.5rem;
+    padding-right: 1.25rem;
     padding-top: 5rem;
   }
   .journey-left,
@@ -355,14 +516,20 @@ body {
     grid-column: auto;
   }
   .journey-marker {
-    left: 1.5rem;
+    left: 1.25rem;
     top: 5.7rem;
-    transform: translate(-50%, -50%) scale(0.86);
+    transform: translate(-50%, -50%);
+    gap: 4px;
   }
-  .journey-marker span {
-    writing-mode: vertical-rl;
+  .journey-marker-label {
+    display: none;
   }
   .ask-felipe {
     @apply bottom-20;
+    width: min(22rem, calc(100vw - 1rem));
+  }
+  .ask-felipe-panel {
+    max-height: 80vh;
+    overflow-y: auto;
   }
 }

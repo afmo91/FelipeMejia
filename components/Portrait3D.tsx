@@ -165,8 +165,8 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
   const { scene } = useGLTF(MODEL_URL);
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
-  const eyeRef = useRef<THREE.Group>(null);
   const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const viewportRef = useRef({ isMobile: typeof window !== "undefined" && window.innerWidth < 768 });
   const focusRef = useRef<PortraitFocus>(DEFAULT_FOCUS);
   const scrollRef = useRef(0);
 
@@ -179,6 +179,14 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
       portraitGeometry.edgesGeometry.dispose();
     };
   }, [portraitGeometry]);
+
+  useEffect(() => {
+    function onResize() {
+      viewportRef.current.isMobile = window.innerWidth < 768;
+    }
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     let frame = 0;
@@ -271,33 +279,29 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
     const scroll = scrollRef.current;
     const titleX = (focus.titleX - 0.5) * 2;
     const titleY = (focus.titleY - 0.5) * 2;
-    const sideX = focus.side === "left" ? 1.18 : -1.18;
-    const sectionLift = 0.18 - focus.progress * 0.34;
+    const isMobile = viewportRef.current.isMobile;
+    const sideOffset = isMobile ? 0 : 0.95;
+    const sideX = focus.side === "left" ? sideOffset : -sideOffset;
+    const sectionLift = 0.1 - focus.progress * 0.2;
     const targetScale = focus.scale ?? (focus.id === "what-i-do" ? 0.92 : focus.id === "contact" ? 0.72 : 0.78 + Math.sin(focus.progress * Math.PI) * 0.08);
-    const scrollDepth = mode === "static" ? 0 : (scroll - 0.42) * 0.18;
+    const scrollDepth = mode === "static" ? 0 : (scroll - 0.42) * 0.14;
     const elapsed = state.clock.elapsedTime;
-    const targetYaw = titleX * 0.74 + pointer.x * 0.04;
-    const targetPitch = -titleY * 0.14 - pointer.y * 0.032;
+    const targetYaw = isMobile ? 0 : titleX * 0.65 + pointer.x * 0.04;
+    const targetPitch = -titleY * 0.12 - pointer.y * 0.028;
 
-    group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetYaw, 0.055);
-    group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetPitch, 0.055);
+    group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetYaw, 0.075);
+    group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetPitch, 0.075);
     group.rotation.z = Math.sin(elapsed * 0.14) * 0.004 + pointer.x * 0.004;
-    group.position.x = THREE.MathUtils.lerp(group.position.x, sideX + pointer.x * 0.02, 0.038);
-    group.position.y = THREE.MathUtils.lerp(group.position.y, sectionLift - titleY * 0.08 - pointer.y * 0.018, 0.038);
-    group.position.z = THREE.MathUtils.lerp(group.position.z, scrollDepth, 0.035);
-    group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x, targetScale, 0.04));
+    group.position.x = THREE.MathUtils.lerp(group.position.x, sideX + pointer.x * 0.02, 0.06);
+    group.position.y = THREE.MathUtils.lerp(group.position.y, sectionLift - titleY * 0.06 - pointer.y * 0.015, 0.06);
+    group.position.z = THREE.MathUtils.lerp(group.position.z, scrollDepth, 0.055);
+    group.scale.setScalar(THREE.MathUtils.lerp(group.scale.x, targetScale, 0.065));
 
     if (glowRef.current) {
       glowRef.current.rotation.copy(group.rotation);
       glowRef.current.position.copy(group.position);
       const pulse = 1.015 + Math.sin(elapsed * 0.45) * 0.004;
       glowRef.current.scale.setScalar(pulse);
-    }
-
-    if (eyeRef.current) {
-      eyeRef.current.position.x = THREE.MathUtils.lerp(eyeRef.current.position.x, pointer.x * 0.018 + titleX * 0.012, 0.12);
-      eyeRef.current.position.y = THREE.MathUtils.lerp(eyeRef.current.position.y, 0.44 - pointer.y * 0.01 - titleY * 0.008, 0.12);
-      eyeRef.current.position.z = 1.03;
     }
 
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.06, 0.035);
@@ -379,17 +383,6 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
           />
         </points>
 
-        <group ref={eyeRef} position={[0, 0.44, 1.03]} renderOrder={4}>
-          <mesh position={[-0.24, 0.01, 0]}>
-            <sphereGeometry args={[0.018, 12, 12]} />
-            <meshBasicMaterial blending={THREE.AdditiveBlending} color="#f8fbff" depthWrite={false} transparent opacity={0.75} />
-          </mesh>
-          <mesh position={[0.24, 0.01, 0]}>
-            <sphereGeometry args={[0.018, 12, 12]} />
-            <meshBasicMaterial blending={THREE.AdditiveBlending} color="#f8fbff" depthWrite={false} transparent opacity={0.75} />
-          </mesh>
-        </group>
-
       </group>
     </>
   );
@@ -429,7 +422,7 @@ export default function Portrait3D() {
   return (
     <div
       aria-label="Reactive GLB wireframe portrait of Felipe Mejia"
-      className="pointer-events-none fixed inset-0 z-0 h-screen w-full overflow-hidden opacity-90 [mask-image:radial-gradient(circle_at_center,black_34%,rgba(0,0,0,0.76)_58%,transparent_88%)]"
+      className="pointer-events-none fixed inset-0 z-0 hidden h-screen w-full overflow-hidden opacity-90 md:block [mask-image:radial-gradient(circle_at_center,black_34%,rgba(0,0,0,0.76)_58%,transparent_88%)]"
       role="img"
     >
       <Suspense fallback={<CanvasFallback />}>

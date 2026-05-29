@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import AISignalLab from "@/components/AISignalLab";
 import AskFelipe from "@/components/AskFelipe";
 import ContactForm from "@/components/ContactForm";
@@ -138,10 +138,6 @@ const cases = [
   ["Experimentation Engine", "Slow funnel learning", "Weekly hypothesis cadence", "+25% conversion, -30% CAC"],
 ];
 
-function linePosition(side: JourneySide) {
-  return side === "left" ? "56%" : "44%";
-}
-
 function SectionBody({ item }: { item: JourneyItem }) {
   if (item.id === "how-i-help") {
     return (
@@ -245,14 +241,7 @@ function SectionBody({ item }: { item: JourneyItem }) {
 export default function HomeJourney() {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeItem = items[activeIndex] || items[0];
-
-  const shellStyle = useMemo(
-    () =>
-      ({
-        "--journey-line-x": linePosition(activeItem.side),
-      }) as CSSProperties,
-    [activeItem.side],
-  );
+  void activeItem;
 
   useEffect(() => {
     let frame = 0;
@@ -310,7 +299,15 @@ export default function HomeJourney() {
 
   return (
     <>
-      <div className="journey-shell signal-scan" style={shellStyle}>
+      <div className="journey-shell signal-scan">
+        {/* Mission control HUD */}
+        <div className="journey-hud" aria-hidden>
+          <span><span className="journey-hud-dot" />Live scan</span>
+          <span>Phase {String(activeIndex + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</span>
+          <span className="journey-hud-live">Signal lock</span>
+        </div>
+        {/* Animated scan pulse on the dual-rail spine */}
+        <div className="spine-pulse-track" aria-hidden><div className="spine-pulse" /></div>
         {items.map((item, index) => {
           const active = activeIndex === index;
           const TitleTag = index === 0 ? "h1" : "h2";
@@ -359,8 +356,9 @@ export default function HomeJourney() {
               viewport={{ amount: 0.42 }}
               whileInView={{ opacity: 1 }}
             >
-              <span className={`journey-marker ${active ? "journey-marker-active" : ""}`}>
-                <span>{item.label}</span>
+              <span className={`journey-marker ${active ? "journey-marker-active" : ""}`} aria-hidden>
+                <span className="journey-marker-phase">{String(index + 1).padStart(2, "0")}</span>
+                <span className="journey-marker-label">{item.label}</span>
               </span>
               <div className="journey-left">{item.side === "left" ? content : null}</div>
               <div className="journey-right">{item.side === "right" ? content : null}</div>
