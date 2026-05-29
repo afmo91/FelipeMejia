@@ -14,6 +14,7 @@ type PortraitGeometry = {
 type PortraitFocus = {
   id: string;
   progress: number;
+  scale?: number;
   side: "left" | "right";
   titleX: number;
   titleY: number;
@@ -164,6 +165,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
   const { scene } = useGLTF(MODEL_URL);
   const groupRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
+  const eyeRef = useRef<THREE.Group>(null);
   const pointerRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
   const focusRef = useRef<PortraitFocus>(DEFAULT_FOCUS);
   const scrollRef = useRef(0);
@@ -244,6 +246,7 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
       focusRef.current = {
         id: detail.id || "home",
         progress: THREE.MathUtils.clamp(detail.progress || 0, 0, 1),
+        scale: detail.scale,
         side: detail.side,
         titleX: THREE.MathUtils.clamp(detail.titleX || 0.5, 0, 1),
         titleY: THREE.MathUtils.clamp(detail.titleY || 0.45, 0, 1),
@@ -268,12 +271,12 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
     const scroll = scrollRef.current;
     const titleX = (focus.titleX - 0.5) * 2;
     const titleY = (focus.titleY - 0.5) * 2;
-    const sideX = focus.side === "right" ? 1.02 : -1.02;
+    const sideX = focus.side === "left" ? 1.18 : -1.18;
     const sectionLift = 0.18 - focus.progress * 0.34;
-    const targetScale = focus.id === "home" ? 0.88 : focus.id === "contact" ? 0.72 : 0.78 + Math.sin(focus.progress * Math.PI) * 0.08;
+    const targetScale = focus.scale ?? (focus.id === "what-i-do" ? 0.92 : focus.id === "contact" ? 0.72 : 0.78 + Math.sin(focus.progress * Math.PI) * 0.08);
     const scrollDepth = mode === "static" ? 0 : (scroll - 0.42) * 0.18;
     const elapsed = state.clock.elapsedTime;
-    const targetYaw = titleX * 0.46 + pointer.x * 0.045;
+    const targetYaw = titleX * 0.74 + pointer.x * 0.04;
     const targetPitch = -titleY * 0.14 - pointer.y * 0.032;
 
     group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetYaw, 0.055);
@@ -289,6 +292,12 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
       glowRef.current.position.copy(group.position);
       const pulse = 1.015 + Math.sin(elapsed * 0.45) * 0.004;
       glowRef.current.scale.setScalar(pulse);
+    }
+
+    if (eyeRef.current) {
+      eyeRef.current.position.x = THREE.MathUtils.lerp(eyeRef.current.position.x, pointer.x * 0.018 + titleX * 0.012, 0.12);
+      eyeRef.current.position.y = THREE.MathUtils.lerp(eyeRef.current.position.y, 0.44 - pointer.y * 0.01 - titleY * 0.008, 0.12);
+      eyeRef.current.position.z = 1.03;
     }
 
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, pointer.x * 0.06, 0.035);
@@ -369,6 +378,17 @@ function GlbBust({ mode }: { mode: PortraitMode }) {
             vertexColors
           />
         </points>
+
+        <group ref={eyeRef} position={[0, 0.44, 1.03]} renderOrder={4}>
+          <mesh position={[-0.24, 0.01, 0]}>
+            <sphereGeometry args={[0.018, 12, 12]} />
+            <meshBasicMaterial blending={THREE.AdditiveBlending} color="#f8fbff" depthWrite={false} transparent opacity={0.75} />
+          </mesh>
+          <mesh position={[0.24, 0.01, 0]}>
+            <sphereGeometry args={[0.018, 12, 12]} />
+            <meshBasicMaterial blending={THREE.AdditiveBlending} color="#f8fbff" depthWrite={false} transparent opacity={0.75} />
+          </mesh>
+        </group>
 
       </group>
     </>

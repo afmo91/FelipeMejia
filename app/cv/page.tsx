@@ -43,8 +43,8 @@ export default function ProtectedCVDownloadsPage() {
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-8">
-          <Link className="text-sm text-accent transition hover:text-white" href="/#resume">
-            Back to interactive resume
+          <Link className="text-sm text-accent transition hover:text-white" href="/#experience">
+            Back to experience
           </Link>
         </div>
       </div>

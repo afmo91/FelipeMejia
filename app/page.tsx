@@ -4,9 +4,19 @@ import PortraitSlot from "@/components/PortraitSlot";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Freelance Product & Growth Consultant",
+  title: "AI Product & Growth Consultant",
   description:
-    "Felipe Mejia helps SaaS, AI, telecom, and digital growth teams ship 0 to 1 products, instrument analytics, and build measurable growth systems.",
+    "Felipe Mejia helps SaaS, AI, telecom, and digital growth teams build agentic workflows, ship 0 to 1 products, instrument analytics, and create measurable growth systems.",
+  keywords: [
+    "AI product consultant",
+    "agentic workflows",
+    "AI workflow automation",
+    "growth product consultant",
+    "product analytics consultant",
+    "0 to 1 product builder",
+    "SaaS growth strategy",
+    "Felipe Mejia",
+  ],
 };
 
 export default function HomePage() {

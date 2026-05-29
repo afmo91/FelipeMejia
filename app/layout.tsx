@@ -12,16 +12,18 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Felipe Mejia | Freelance Product & Growth Consultant",
+    default: "Felipe Mejia | AI Product & Growth Consultant",
     template: "%s | Felipe Mejia",
   },
   description:
-    "Felipe Mejia is a freelance product and growth consultant helping SaaS, AI, telecom, and digital teams ship 0 to 1 products, analytics systems, and measurable growth loops.",
+    "Felipe Mejia is an AI product and growth consultant helping SaaS, telecom, and digital teams build agentic workflows, ship 0 to 1 products, instrument analytics systems, and create measurable growth loops.",
   keywords: [
     "Felipe Mejia",
     "freelance product consultant",
     "growth product manager",
     "AI product strategy",
+    "agentic AI workflows",
+    "AI workflow automation",
     "SaaS growth",
     "product-led growth",
     "analytics instrumentation",
@@ -29,9 +31,9 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     description:
-      "Freelance product and growth support for AI-enabled workflows, experimentation, analytics, PLG, and digital onboarding.",
+      "AI product and growth support for agentic workflows, experimentation, analytics, PLG, and digital onboarding.",
     siteName: "Felipe Mejia",
-    title: "Felipe Mejia | Freelance Product & Growth Consultant",
+    title: "Felipe Mejia | AI Product & Growth Consultant",
     type: "website",
     url: siteUrl,
   },
@@ -41,8 +43,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     description:
-      "Freelance product and growth support for AI-enabled workflows, experimentation, analytics, PLG, and digital onboarding.",
-    title: "Felipe Mejia | Freelance Product & Growth Consultant",
+      "AI product and growth support for agentic workflows, experimentation, analytics, PLG, and digital onboarding.",
+    title: "Felipe Mejia | AI Product & Growth Consultant",
   },
 };
 
@@ -68,11 +70,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         areaServed: "Global",
         serviceType: [
           "AI product strategy",
+          "Agentic AI workflow design",
+          "AI Signal Lab diagnostics",
           "Growth experimentation",
           "Analytics instrumentation",
           "Digital onboarding optimization",
           "Fractional product leadership",
         ],
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "AI product and growth consulting services",
+          itemListElement: [
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Product clarity sprint" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Growth system audit" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "AI workflow build" } },
+          ],
+        },
+      },
+      {
+        "@type": "SoftwareApplication",
+        applicationCategory: "BusinessApplication",
+        description:
+          "A lightweight AI diagnostic on Felipe Mejia's portfolio that turns product, growth, and workflow challenges into a scoped signal brief.",
+        name: "AI Signal Lab",
+        operatingSystem: "Web",
+        url: `${siteUrl}/#ai-signal-lab`,
       },
       {
         "@type": "WebSite",

@@ -1,9 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ContactForm() {
   const [sent, setSent] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    function handlePrefill(event: Event) {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      if (detail?.message) {
+        setMessage(detail.message);
+      }
+    }
+
+    window.addEventListener("prefill-contact-message", handlePrefill);
+    return () => window.removeEventListener("prefill-contact-message", handlePrefill);
+  }, []);
 
   return (
     <form
@@ -12,6 +25,7 @@ export default function ContactForm() {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
         console.log(Object.fromEntries(form));
+        setMessage("");
         event.currentTarget.reset();
         setSent(true);
       }}
@@ -32,7 +46,14 @@ export default function ContactForm() {
         <label className="form-label" htmlFor="message">
           Message
         </label>
-        <textarea className="form-field min-h-40 resize-y" id="message" name="message" required />
+        <textarea
+          className="form-field min-h-40 resize-y"
+          id="message"
+          name="message"
+          onChange={(event) => setMessage(event.target.value)}
+          required
+          value={message}
+        />
       </div>
       <button className="button-primary w-fit" type="submit">
         Send project note

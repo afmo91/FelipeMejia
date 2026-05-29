@@ -4,141 +4,242 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import AISignalLab from "@/components/AISignalLab";
+import AskFelipe from "@/components/AskFelipe";
 import ContactForm from "@/components/ContactForm";
 
 type JourneySide = "left" | "right";
-
 type JourneyItem = {
-  bullets: ReactNode[];
-  cta?: ReactNode;
-  dashboard: string;
-  date: string;
-  eyebrow: string;
+  kicker: string;
   id: string;
+  label: string;
   metrics: string[];
+  note: string;
+  scan: string;
   side: JourneySide;
   title: ReactNode;
 };
 
 const items: JourneyItem[] = [
   {
-    bullets: [
-      <>Turn <span className="text-accent2">messy workflows</span> into usable AI-enabled products.</>,
-      <>Build <span className="text-accent">instrumentation</span> before teams start guessing.</>,
-      <>Create growth loops that connect <span className="text-pink-300">activation, retention, and revenue</span>.</>,
-    ],
-    cta: (
-      <div className="mt-8 flex flex-wrap gap-4">
-        <a className="button-primary" href="#contact">
-          Work with me
-        </a>
-        <a className="button-secondary" href="#portfolio">
-          View proof
-        </a>
-      </div>
-    ),
-    dashboard: "OPEN FOR SELECT FREELANCE WORK",
-    date: "2026",
-    eyebrow: "Freelance Product & Growth Leader | AI, SaaS, 0->1",
-    id: "home",
-    metrics: ["12+ years", "0->1 products", "AI workflows"],
+    id: "what-i-do",
+    kicker: "Product · Growth · AI Systems",
+    label: "What I Do",
+    metrics: ["12+ years", "0->1", "AI workflows", "Analytics"],
+    note: "Start with the messy system, then find the first signal worth shipping around.",
+    scan: "Signal lock",
     side: "left",
-    title: <>I build AI-enabled products and growth systems that get traction.</>,
+    title: <>I turn ambiguous workflows into AI-enabled products and measurable growth systems.</>,
   },
   {
-    bullets: [
-      <>Define the <span className="text-accent2">smallest useful MVP</span>, roadmap, specs, and release rhythm.</>,
-      <>Install an <span className="text-accent">experiment cadence</span> across acquisition, onboarding, lifecycle, and pricing.</>,
-      <>Translate analytics into decisions: <span className="text-pink-300">what to ship, fix, pause, or scale</span>.</>,
-    ],
-    cta: (
-      <a className="button-secondary mt-8 inline-flex" href="#contact">
-        Start a project
-      </a>
-    ),
-    dashboard: "FRACTIONAL / PROJECT-BASED",
-    date: "NOW",
-    eyebrow: "Services",
-    id: "services",
-    metrics: ["AI strategy", "Growth systems", "Dashboards"],
+    id: "how-i-help",
+    kicker: "Focused engagement paths",
+    label: "How I Help",
+    metrics: ["Clarity sprint", "Growth audit", "AI workflow build"],
+    note: "A good engagement creates shipped decisions, not a heavier backlog.",
+    scan: "Route map",
     side: "right",
-    title: <>Freelance support for teams that need traction, not more decks.</>,
+    title: <>Three ways to move from scattered effort to a focused operating system.</>,
   },
   {
-    bullets: [
-      <>I work across <span className="text-accent2">telecom, e-commerce, and B2B SaaS</span>.</>,
-      <>My edge is pairing <span className="text-accent">product discovery</span> with measurable growth execution.</>,
-      <>I keep teams aligned through <span className="text-pink-300">clear ownership, decision logs, and cadence</span>.</>,
-    ],
-    dashboard: "OPERATOR PROFILE",
-    date: "12+ YRS",
-    eyebrow: "About",
-    id: "about",
-    metrics: ["Discovery", "Execution", "Observability"],
+    id: "ai-signal-lab",
+    kicker: "Live agentic product demo",
+    label: "AI Signal Lab",
+    metrics: ["Diagnosis", "Missing signals", "First sprint", "AI layer"],
+    note: "This is the work in miniature: describe the messy workflow and watch it become a scoped product brief.",
+    scan: "Agent scan",
     side: "left",
-    title: <>I turn ambiguous systems into shipped outcomes teams can measure.</>,
+    title: <>Try a lightweight AI diagnostic for a product, funnel, or workflow challenge.</>,
   },
   {
-    bullets: [
-      <>Spotz.pro: AI-powered advertising workflow platform across <span className="text-accent2">Google, Meta, LinkedIn, TikTok, X, and Pinterest</span>.</>,
-      <>Adamo Telecom: onboarding transformation from <span className="text-accent">5 days to same-day activation</span>.</>,
-      <>Growth system: <span className="text-pink-300">+25% conversion, -30% CAC, €200K+ recovered</span>.</>,
-    ],
-    cta: (
-      <Link className="button-secondary mt-8 inline-flex" href="/cv">
-        Protected CV downloads
-      </Link>
-    ),
-    dashboard: "CAREER PROOF",
-    date: "2013-2026",
-    eyebrow: "Resume",
-    id: "resume",
-    metrics: ["+25% CVR", "-30% CAC", "€3M+ budget"],
+    id: "results",
+    kicker: "Commercial proof",
+    label: "Results",
+    metrics: ["5 days -> same-day", "+25% conversion", "-30% CAC", "€200K+ recovered"],
+    note: "The point of instrumentation is not prettier charts. It is faster decisions and visible lift.",
+    scan: "Metric pulse",
     side: "right",
-    title: <>Career timeline built around shipped outcomes.</>,
+    title: <>The work is strongest when product decisions connect to business movement.</>,
   },
   {
-    bullets: [
-      <>Spotz.pro: <span className="text-accent2">AI ads operating layer</span> for cross-channel workflows and analytics.</>,
-      <>Adamo: <span className="text-accent">digital onboarding</span>, lifecycle visibility, and stakeholder alignment across Spain.</>,
-      <>Attribution + experimentation became <span className="text-pink-300">weekly C-level decision inputs</span>.</>,
-    ],
-    cta: (
-      <a className="button-secondary mt-8 inline-flex" href="#portfolio-spotz-ai-ads-operating-layer">
-        View case studies
-      </a>
-    ),
-    dashboard: "SELECTED WORK",
-    date: "5 CASES",
-    eyebrow: "Portfolio",
-    id: "portfolio",
-    metrics: ["6 channels", "same-day activation", "PLG"],
+    id: "experience",
+    kicker: "Operator log",
+    label: "Experience",
+    metrics: ["Spotz.pro", "Adamo Telecom", "€3M+ budget", "C-level dashboards"],
+    note: "Experience matters most when it shows how ambiguity became shipped outcomes.",
+    scan: "Release history",
     side: "left",
-    title: <>Selected work with commercial outcomes.</>,
+    title: <>A product and growth track record built around execution, signal, and adoption.</>,
   },
   {
-    bullets: [
-      <>Useful for founders and teams with a <span className="text-accent2">product, funnel, or AI workflow</span> that needs clarity.</>,
-      <>I can help scope the work, instrument the system, and create an <span className="text-accent">execution rhythm</span>.</>,
-      <>Best fit: teams that want <span className="text-pink-300">practical product leadership</span>, not vague advice.</>,
-    ],
-    cta: (
-      <div className="mt-8">
-        <ContactForm />
-      </div>
-    ),
-    dashboard: "INTRO / PROJECT NOTE",
-    date: "CONTACT",
-    eyebrow: "Contact",
+    id: "case-studies",
+    kicker: "Problem -> Move -> Result",
+    label: "Case Studies",
+    metrics: ["AI ads", "Digital onboarding", "Attribution", "Experimentation"],
+    note: "Every useful case study should answer the same question: what changed because of the work?",
+    scan: "Proof map",
+    side: "right",
+    title: <>Selected work where the operating model mattered as much as the interface.</>,
+  },
+  {
     id: "contact",
-    metrics: ["Email", "LinkedIn", "GitHub"],
-    side: "right",
-    title: <>Have a product or growth system that needs focus?</>,
+    kicker: "Map the opportunity",
+    label: "Start",
+    metrics: ["Scope", "Signals", "Sprint", "Decision cadence"],
+    note: "Bring the messy version. The first job is to make the opportunity legible.",
+    scan: "Project brief",
+    side: "left",
+    title: <>Have a product, growth, or AI workflow that needs sharper execution?</>,
   },
 ];
 
+const services = [
+  {
+    description: "Turn a fuzzy product idea into a prioritized MVP, user journey, metrics, and release path.",
+    title: "Product clarity sprint",
+  },
+  {
+    description: "Find funnel leaks, instrumentation gaps, pricing questions, and the experiment cadence to fix them.",
+    title: "Growth system audit",
+  },
+  {
+    description: "Design an AI-assisted workflow that classifies work, surfaces exceptions, and feeds decisions back into dashboards.",
+    title: "AI workflow build",
+  },
+];
+
+const results = [
+  ["5 days -> same-day", "Activation time reduced through digital onboarding"],
+  ["+25%", "Conversion lift from experimentation cadence"],
+  ["-30%", "CAC reduction through sharper funnel execution"],
+  ["€200K+", "Recovered by attribution and spend reallocation"],
+  ["€3M+", "Annual performance budget owned across channels"],
+];
+
+const experience = [
+  {
+    company: "Spotz.pro",
+    detail: "Built an AI-powered multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X, and Pinterest.",
+    role: "Product Builder",
+    year: "2025-2026",
+  },
+  {
+    company: "Adamo Telecom",
+    detail: "Digitized onboarding, unified customer data, built attribution, and turned dashboards into weekly C-level decision inputs.",
+    role: "Growth Product Manager",
+    year: "2019-2025",
+  },
+];
+
+const cases = [
+  ["AI Ads Operating Layer", "Fragmented campaign workflows", "Unified workflow + analytics dashboard", "Cross-channel observability"],
+  ["Digital Onboarding", "Legacy activation delay", "Digital-first onboarding redesign", "5 days -> same-day"],
+  ["Attribution Model", "Wasted performance spend", "Budget governance dashboards", "€200K+ recovered"],
+  ["Experimentation Engine", "Slow funnel learning", "Weekly hypothesis cadence", "+25% conversion, -30% CAC"],
+];
+
 function linePosition(side: JourneySide) {
-  return side === "right" ? "39%" : "61%";
+  return side === "left" ? "56%" : "44%";
+}
+
+function SectionBody({ item }: { item: JourneyItem }) {
+  if (item.id === "how-i-help") {
+    return (
+      <div className="route-grid">
+        {services.map((service) => (
+          <article className="scan-readout" key={service.title}>
+            <span>Route</span>
+            <h3>{service.title}</h3>
+            <p>{service.description}</p>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (item.id === "ai-signal-lab") {
+    return <AISignalLab sectionLabel={item.label} />;
+  }
+
+  if (item.id === "results") {
+    return (
+      <div className="metric-grid">
+        {results.map(([value, label]) => (
+          <div className="metric-tile" key={value}>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (item.id === "experience") {
+    return (
+      <div className="operator-log">
+        {experience.map((entry) => (
+          <article key={entry.company}>
+            <span>{entry.year}</span>
+            <h3>{entry.company}</h3>
+            <p className="text-accent2">{entry.role}</p>
+            <p>{entry.detail}</p>
+          </article>
+        ))}
+        <Link className="button-secondary mt-6 inline-flex" href="/cv">
+          Protected CV downloads
+        </Link>
+      </div>
+    );
+  }
+
+  if (item.id === "case-studies") {
+    return (
+      <div className="case-map">
+        {cases.map(([title, problem, move, result]) => (
+          <article id={`portfolio-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`} key={title}>
+            <h3>{title}</h3>
+            <div>
+              <span>Problem</span>
+              <p>{problem}</p>
+            </div>
+            <div>
+              <span>Move</span>
+              <p>{move}</p>
+            </div>
+            <div>
+              <span>Result</span>
+              <p>{result}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (item.id === "contact") {
+    return (
+      <div className="start-grid">
+        <div className="scan-readout">
+          <span>Best fit</span>
+          <h3>Focused product, growth, or AI workflow challenges</h3>
+          <p>
+            Send the context: what is stuck, what data you trust, what decision you need to make, and what success would
+            look like in the next few weeks.
+          </p>
+        </div>
+        <ContactForm />
+      </div>
+    );
+  }
+
+  return (
+    <div className="signal-fragments">
+      <span>Messy workflows</span>
+      <span>Clear product bets</span>
+      <span>Instrumented decisions</span>
+      <span>Measurable traction</span>
+    </div>
+  );
 }
 
 export default function HomeJourney() {
@@ -174,9 +275,19 @@ export default function HomeJourney() {
               id: item.id,
               index,
               progress: index / Math.max(items.length - 1, 1),
+              scale: item.id === "what-i-do" ? 0.92 : item.id === "ai-signal-lab" ? 0.78 : item.id === "contact" ? 0.7 : 0.8,
               side: item.side,
               titleX,
               titleY,
+            },
+          }),
+        );
+        window.dispatchEvent(
+          new CustomEvent("signal-section-change", {
+            detail: {
+              id: item.id,
+              label: item.label,
+              note: item.note,
             },
           }),
         );
@@ -198,69 +309,66 @@ export default function HomeJourney() {
   }, [activeIndex]);
 
   return (
-    <div className="journey-shell" style={shellStyle}>
-      {items.map((item, index) => {
-        const active = activeIndex === index;
-        const TitleTag = index === 0 ? "h1" : "h2";
-        const content = (
-          <motion.div
-            animate={{ opacity: active ? 1 : 0.72, scale: active ? 1 : 0.96, y: active ? 0 : 16 }}
-            className={`journey-content ${active ? "journey-content-active" : ""}`}
-            data-active={active ? "true" : "false"}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            <div className="dashboard-strip">
-              <span>{item.date}</span>
-              <span>{item.dashboard}</span>
-            </div>
-            <p className="eyebrow mt-6">{item.eyebrow}</p>
-            <TitleTag
-              className={`${
-                index === 0 ? "text-4xl sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl" : "text-4xl lg:text-5xl 2xl:text-6xl"
-              } mt-5 max-w-4xl font-display font-semibold leading-tight text-white`}
-              data-portrait-title
+    <>
+      <div className="journey-shell signal-scan" style={shellStyle}>
+        {items.map((item, index) => {
+          const active = activeIndex === index;
+          const TitleTag = index === 0 ? "h1" : "h2";
+          const content = (
+            <motion.div
+              animate={{ opacity: active ? 1 : 0.7, scale: active ? 1 : 0.97, y: active ? 0 : 18 }}
+              className={`journey-content ${active ? "journey-content-active" : ""}`}
+              data-active={active ? "true" : "false"}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              {item.title}
-            </TitleTag>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {item.metrics.map((metric) => (
-                <span className="metric-pill" key={metric}>
-                  {metric}
-                </span>
-              ))}
-            </div>
-            {item.id === "home" ? item.cta : null}
-            <ul className="mt-8 grid gap-4 text-lg leading-8 text-gray-300">
-              {item.bullets.map((bullet, bulletIndex) => (
-                <li className="signal-line" key={bulletIndex}>
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-            {item.id === "home" ? null : item.cta}
-          </motion.div>
-        );
+              <div className="scan-status">
+                <span>{item.scan}</span>
+                <span>{item.kicker}</span>
+              </div>
+              <p className="eyebrow mt-6">{item.label}</p>
+              <TitleTag
+                className={`${
+                  index === 0 ? "text-4xl sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl" : "text-3xl lg:text-4xl 2xl:text-5xl"
+                } mt-5 max-w-4xl font-display font-semibold leading-tight text-white`}
+                data-portrait-title
+                id={`${item.id}-title`}
+              >
+                {item.title}
+              </TitleTag>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {item.metrics.map((metric) => (
+                  <span className="metric-pill" key={metric}>
+                    {metric}
+                  </span>
+                ))}
+              </div>
+              <SectionBody item={item} />
+            </motion.div>
+          );
 
-        return (
-          <motion.section
-            className={`journey-stage ${item.side === "right" ? "journey-stage-right" : "journey-stage-left"}`}
-            data-journey-id={item.id}
-            id={item.id === "home" ? undefined : item.id}
-            initial={{ opacity: 0.5 }}
-            key={item.id}
-            onViewportEnter={() => setActiveIndex(index)}
-            transition={{ duration: 0.5 }}
-            viewport={{ amount: 0.48 }}
-            whileInView={{ opacity: 1 }}
-          >
-            <span className={`journey-marker ${active ? "journey-marker-active" : ""}`}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-            </span>
-            <div className="journey-left">{item.side === "left" ? content : null}</div>
-            <div className="journey-right">{item.side === "right" ? content : null}</div>
-          </motion.section>
-        );
-      })}
-    </div>
+          return (
+            <motion.section
+              aria-labelledby={`${item.id}-title`}
+              className={`journey-stage ${item.side === "right" ? "journey-stage-right" : "journey-stage-left"}`}
+              data-journey-id={item.id}
+              id={item.id === "what-i-do" ? undefined : item.id}
+              initial={{ opacity: 0.5 }}
+              key={item.id}
+              onViewportEnter={() => setActiveIndex(index)}
+              transition={{ duration: 0.5 }}
+              viewport={{ amount: 0.42 }}
+              whileInView={{ opacity: 1 }}
+            >
+              <span className={`journey-marker ${active ? "journey-marker-active" : ""}`}>
+                <span>{item.label}</span>
+              </span>
+              <div className="journey-left">{item.side === "left" ? content : null}</div>
+              <div className="journey-right">{item.side === "right" ? content : null}</div>
+            </motion.section>
+          );
+        })}
+      </div>
+      <AskFelipe />
+    </>
   );
 }

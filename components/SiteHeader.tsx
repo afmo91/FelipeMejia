@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/#services", label: "Services" },
-  { href: "/#about", label: "About" },
-  { href: "/#resume", label: "Resume" },
-  { href: "/#portfolio", label: "Portfolio" },
+  { href: "/#how-i-help", label: "Services" },
+  { href: "/#ai-signal-lab", label: "AI Lab" },
+  { href: "/#results", label: "Results" },
+  { href: "/#experience", label: "Experience" },
+  { href: "/#case-studies", label: "Work" },
   { href: "/blog", label: "Blog" },
   { href: "/#contact", label: "Contact" },
   { href: "/login", label: "Login" },
@@ -60,7 +61,7 @@ export default function SiteHeader() {
     }
 
     let frame = 0;
-    const sectionIds = ["services", "about", "resume", "portfolio", "contact"];
+    const sectionIds = ["how-i-help", "ai-signal-lab", "results", "experience", "case-studies", "contact"];
 
     function updateActiveSection() {
       if (frame) {

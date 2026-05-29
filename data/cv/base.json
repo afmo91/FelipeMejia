@@ -21,7 +21,7 @@
     {
       "company": "Spotz.pro",
       "role": "Product Builder",
-      "caseStudyHref": "/#portfolio-spotz-ai-ads-operating-layer",
+      "caseStudyHref": "/#portfolio-ai-ads-operating-layer",
       "metrics": ["AI ads platform", "6 channels", "0→1 delivery"],
       "bullets": [
         "Built an AI-powered multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X and Pinterest.",
@@ -33,7 +33,7 @@
     {
       "company": "Adamo Telecom",
       "role": "Growth Product Manager",
-      "caseStudyHref": "/#portfolio-adamo-digital-onboarding",
+      "caseStudyHref": "/#portfolio-digital-onboarding",
       "metrics": ["same-day activation", "~15% churn reduction", "+25% conversion", "-30% CAC", "€200K+ recovered", "€3M+ budget"],
       "bullets": [
         "Unified customer data across Salesforce and marketing stack for full-funnel visibility.",
