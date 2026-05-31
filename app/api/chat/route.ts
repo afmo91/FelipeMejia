@@ -61,6 +61,18 @@ export async function POST(request: Request) {
 
 function fallbackReply(message: string): string {
   const t = message.toLowerCase();
+  if (t.includes("github")) {
+    return "My GitHub is https://github.com/afmo91. Want the CV or LinkedIn too?";
+  }
+  if (t.includes("linkedin")) {
+    return "My LinkedIn is https://www.linkedin.com/in/felipemejiaosorio/. Want to connect there or use email?";
+  }
+  if (t.includes("email") || t.includes("contact") || t.includes("reach")) {
+    return "Email me at felipe.mejia@spotz.pro, or connect on LinkedIn. What would you like to discuss?";
+  }
+  if (t.includes("cv") || t.includes("resume")) {
+    return "The CV is at /cv, with the current structured version of my work. Are you reviewing for hiring or consulting?";
+  }
   if (t.includes("result") || t.includes("number")) {
     return "+25% conversion, €200K+ recovered, same-day activation. All measured. Want to go deeper on any of these?";
   }

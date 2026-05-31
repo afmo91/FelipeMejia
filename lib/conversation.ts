@@ -1,22 +1,33 @@
-// ─── Types ────────────────────────────────────────────────────────
+// Chat-first conversation model for the homepage experience.
+
 export type ConvTopic =
-  | "neutral" | "results" | "ai" | "growth" | "product" | "experience" | "contact";
+  | "neutral"
+  | "results"
+  | "ai"
+  | "growth"
+  | "product"
+  | "experience"
+  | "contact";
 
 export type ConvState =
-  | "assembling"
-  | "audio_gate"
-  | "branching"
-  | "hiring_intro"
+  | "welcome"
+  | "intro"
+  | "specialise"
+  | "hiring"
   | "hiring_results"
-  | "hiring_experience"
-  | "hiring_cv"
-  | "consulting_problem"
-  | "consulting_how"
-  | "consulting_lab"
-  | "consulting_start"
+  | "hiring_ai"
+  | "hiring_process"
+  | "consulting"
+  | "consulting_results"
+  | "consulting_ai"
+  | "consulting_process"
+  | "exploring"
   | "exploring_story"
   | "exploring_work"
+  | "exploring_process"
   | "connect"
+  | "cv"
+  | "free"
   | "freeform";
 
 export type Message = {
@@ -24,193 +35,295 @@ export type Message = {
   role: "felipe" | "user";
   text: string;
   topic?: ConvTopic;
-  action?: "show_cv" | "show_lab" | "show_contact";
+  voiceFile?: string;
+  suggestedReplies?: string[];
+  action?: "show_cv" | "show_contact";
 };
 
 export type ScriptedStep = {
+  state: ConvState;
   text: string;
   topic: ConvTopic;
-  suggestions: string[];
-  action?: "show_cv" | "show_lab" | "show_contact";
+  suggestedReplies: string[];
+  voiceFile?: string;
+  action?: "show_cv" | "show_contact";
 };
 
-// ─── Scripted conversation steps ──────────────────────────────────
+const audio = (state: ConvState) => `/audio/message-${state}.mp3`;
+
 export const STEPS: Record<ConvState, ScriptedStep> = {
-  assembling: { text: "", topic: "neutral", suggestions: [] },
-  freeform:   { text: "", topic: "neutral", suggestions: [] },
-
-  audio_gate: {
-    text: "Hi — I'm Felipe. Before we start, would you like me to talk you through this?",
+  welcome: {
+    state: "welcome",
+    text: "Hi, I'm Felipe — product builder, growth operator, AI systems designer. Want me to walk you through what I do?",
     topic: "neutral",
-    suggestions: ["🔊 Yes, talk to me", "📖 I'll read, thanks"],
+    voiceFile: audio("welcome"),
+    suggestedReplies: ["Yes, walk me through it", "What do you specialise in?", "I'll look around myself"],
   },
-
-  branching: {
+  intro: {
+    state: "intro",
     text: "What brings you here?",
     topic: "neutral",
-    suggestions: ["I'm hiring or evaluating", "I need a consultant or builder", "Just exploring"],
+    voiceFile: audio("intro"),
+    suggestedReplies: ["Hiring", "Consulting", "Exploring"],
+  },
+  specialise: {
+    state: "specialise",
+    text: "I specialise in AI-enabled products, growth systems, and analytics loops that turn messy signals into shipped decisions.",
+    topic: "ai",
+    voiceFile: audio("specialise"),
+    suggestedReplies: ["Hiring", "Consulting", "Show results"],
   },
 
-  // ── Hiring path ────────────────────────────────────────────────
-  hiring_intro: {
-    text: "12+ years taking products from ambiguous brief to shipped outcome. €3M+ in budget owned. AI platforms built 0→1. What would you like to dig into?",
+  hiring: {
+    state: "hiring",
+    text: "I've led AI-enabled products from idea to launch. Would you like to see results, process, or roles I've played?",
     topic: "product",
-    suggestions: ["Show me the results", "Tell me about your AI work", "Where have you worked?"],
+    voiceFile: audio("hiring"),
+    suggestedReplies: ["Show results", "Tell me about AI work", "What's your process?"],
   },
   hiring_results: {
-    text: "Same-day activation from a 5-day process. +25% conversion through experimentation. €200K+ recovered through attribution. −30% CAC. All shipped, all measured.",
+    state: "hiring_results",
+    text: "Results: same-day activation from a five-day process, +25% conversion, -30% CAC, and €200K+ recovered through attribution.",
     topic: "results",
-    suggestions: ["Walk me through a case study", "What companies?", "How do I reach you?"],
+    voiceFile: audio("hiring_results"),
+    suggestedReplies: ["Tell me about AI work", "What's your process?", "Want to connect?"],
   },
-  hiring_experience: {
-    text: "At Spotz.pro I built a multi-channel AI ad platform from zero — Google, Meta, LinkedIn, TikTok, X and Pinterest in one operating model. At Adamo Telecom I digitised onboarding and owned €3M+ in annual performance budget.",
-    topic: "experience",
-    suggestions: ["Download your CV", "Tell me about your AI systems work", "Let's connect"],
-  },
-  hiring_cv: {
-    text: "I'll put together a brief tailored to your context. Download the CV below, or connect directly — whichever is easier.",
-    topic: "contact",
-    suggestions: ["Connect on LinkedIn", "Send a message", "What else should I know?"],
-    action: "show_cv",
-  },
-
-  // ── Consulting path ────────────────────────────────────────────
-  consulting_problem: {
-    text: "I work best when there's a gap between data and decision — or between an idea and a shipped product. Does that sound like where you are?",
-    topic: "growth",
-    suggestions: ["Yes, exactly that", "Tell me about your engagements", "Show me the AI work"],
-  },
-  consulting_how: {
-    text: "Three ways to engage: a one-week Clarity Sprint to scope a fuzzy idea, a two-week Growth Audit to find the leaks, or a four-to-six week AI Workflow Build. Which sounds closest?",
-    topic: "product",
-    suggestions: ["The sprint sounds right", "I need the audit", "Tell me about the AI build"],
-  },
-  consulting_lab: {
-    text: "Describe your challenge and watch it become a scoped product signal. What's the problem you're sitting with?",
+  hiring_ai: {
+    state: "hiring_ai",
+    text: "At Spotz.pro, I built a multi-channel AI ads operating layer across Google, Meta, LinkedIn, TikTok, X, and Pinterest.",
     topic: "ai",
-    suggestions: ["Skip the demo, let's talk", "What does the AI build look like?", "How do I start?"],
-    action: "show_lab",
+    voiceFile: audio("hiring_ai"),
+    suggestedReplies: ["Show results", "What's your process?", "Show CV"],
   },
-  consulting_start: {
-    text: "Bring the messy version. The first job is to make the opportunity legible. What's stuck?",
-    topic: "contact",
-    suggestions: ["Let's talk", "Send a message", "I need more context first"],
-    action: "show_contact",
+  hiring_process: {
+    state: "hiring_process",
+    text: "My process is simple: clarify the decision, instrument the signal, ship the smallest useful product, then iterate with the metrics in view.",
+    topic: "product",
+    voiceFile: audio("hiring_process"),
+    suggestedReplies: ["Show results", "Show CV", "Want to connect?"],
   },
 
-  // ── Exploring path ─────────────────────────────────────────────
-  exploring_story: {
-    text: "12 years. Telecoms, SaaS, e-commerce, AI. Always the person who connects the messy data problem to the shipped product. What are you curious about?",
+  consulting: {
+    state: "consulting",
+    text: "I help teams turn fuzzy AI, growth, or analytics problems into concrete workflows and product releases.",
+    topic: "growth",
+    voiceFile: audio("consulting"),
+    suggestedReplies: ["Show results", "What can we build?", "What's your process?"],
+  },
+  consulting_results: {
+    state: "consulting_results",
+    text: "The work usually lands as faster activation, cleaner attribution, sharper experiments, or an AI workflow that removes manual review from the critical path.",
+    topic: "results",
+    voiceFile: audio("consulting_results"),
+    suggestedReplies: ["What can we build?", "What's your process?", "Want to connect?"],
+  },
+  consulting_ai: {
+    state: "consulting_ai",
+    text: "Typical builds include workflow triage, campaign intelligence, attribution dashboards, and copilots that surface exceptions before teams miss them.",
+    topic: "ai",
+    voiceFile: audio("consulting_ai"),
+    suggestedReplies: ["Show results", "What's your process?", "Want to connect?"],
+  },
+  consulting_process: {
+    state: "consulting_process",
+    text: "I usually start with a clarity sprint, map the current operating loop, then build a thin version that proves the highest-risk assumption.",
+    topic: "product",
+    voiceFile: audio("consulting_process"),
+    suggestedReplies: ["Show results", "What can we build?", "Want to connect?"],
+  },
+
+  exploring: {
+    state: "exploring",
+    text: "Start with the through-line: telecom, SaaS, e-commerce, and AI work where product judgment had to meet commercial pressure.",
     topic: "experience",
-    suggestions: ["Your AI work", "Your growth systems", "How you work"],
+    voiceFile: audio("exploring"),
+    suggestedReplies: ["Your story", "Show work", "Want to connect?"],
+  },
+  exploring_story: {
+    state: "exploring_story",
+    text: "I've spent 12+ years connecting growth pressure, customer behavior, and product delivery — usually where teams need clarity more than ceremony.",
+    topic: "experience",
+    voiceFile: audio("exploring_story"),
+    suggestedReplies: ["Show work", "How you work", "Want to connect?"],
   },
   exploring_work: {
-    text: "Four things I'm proud of: an AI ads platform at Spotz.pro, onboarding that went from 5 days to same-day, attribution that recovered €200K+, and an experimentation engine that moved conversion 25%. Any of these relevant?",
+    state: "exploring_work",
+    text: "The highlights: an AI ads platform, same-day onboarding, €200K+ recovered through attribution, and an experimentation cadence that lifted conversion 25%.",
     topic: "results",
-    suggestions: ["Tell me about the AI platform", "The onboarding story", "What are you building now?"],
+    voiceFile: audio("exploring_work"),
+    suggestedReplies: ["Your story", "How you work", "Show CV"],
+  },
+  exploring_process: {
+    state: "exploring_process",
+    text: "I work by making the messy thing visible: map the loop, find the missing signal, ship a useful slice, and keep the team close to the evidence.",
+    topic: "product",
+    voiceFile: audio("exploring_process"),
+    suggestedReplies: ["Show work", "Show CV", "Want to connect?"],
   },
 
   connect: {
-    text: "No pitch. If something resonated — reach out. LinkedIn or a quick message both work.",
+    state: "connect",
+    text: "Yes — the easiest path is email or LinkedIn. Email me at felipe.mejia@spotz.pro, or connect on LinkedIn.",
     topic: "contact",
-    suggestions: ["Connect on LinkedIn", "Send a message", "Show me more work"],
+    voiceFile: audio("connect"),
+    suggestedReplies: ["Open LinkedIn", "Email Felipe", "Show CV"],
     action: "show_contact",
+  },
+  cv: {
+    state: "cv",
+    text: "The CV page has the current structured version. Use it as a quick scan, then reach out if a specific role or project fits.",
+    topic: "contact",
+    voiceFile: audio("cv"),
+    suggestedReplies: ["Open CV", "Want to connect?", "Ask a question"],
+    action: "show_cv",
+  },
+  free: {
+    state: "free",
+    text: "Sounds good. I'll stay quiet unless you ask me something.",
+    topic: "neutral",
+    suggestedReplies: [],
+  },
+  freeform: {
+    state: "freeform",
+    text: "",
+    topic: "neutral",
+    suggestedReplies: ["Want to connect?", "Show CV", "Ask another question"],
   },
 };
 
-// ─── Routing ──────────────────────────────────────────────────────
-export function routeUserInput(input: string, current: ConvState): ConvState {
-  const t = input.toLowerCase();
+export const SCRIPTED_AUDIO_FILES = Object.values(STEPS)
+  .map((step) => step.voiceFile)
+  .filter((file): file is string => Boolean(file));
 
-  if (current === "audio_gate") return "branching";
+function norm(input: string) {
+  return input
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  if (current === "branching") {
-    if (t.includes("hiring") || t.includes("evaluat")) return "hiring_intro";
-    if (t.includes("consult") || t.includes("builder") || t.includes("need")) return "consulting_problem";
-    return "exploring_story";
+function isOneOf(input: string, values: string[]) {
+  const normalized = norm(input);
+  return values.some((value) => norm(value) === normalized);
+}
+
+export function isAudioOptIn(input: string) {
+  return isOneOf(input, ["Yes, walk me through it"]);
+}
+
+export function isAudioOptOut(input: string) {
+  return isOneOf(input, ["I'll look around myself"]);
+}
+
+export function nextStep(input: string, current: ConvState): ConvState {
+  const t = norm(input);
+
+  if (current === "welcome") {
+    if (isOneOf(input, ["Yes, walk me through it"])) return "intro";
+    if (isOneOf(input, ["What do you specialise in?"])) return "specialise";
+    if (isOneOf(input, ["I'll look around myself"])) return "free";
+    return "freeform";
   }
 
-  if (current === "hiring_intro") {
-    if (t.includes("result") || t.includes("number") || t.includes("proof")) return "hiring_results";
-    if (t.includes("ai") || t.includes("tech") || t.includes("system")) return "hiring_experience";
-    return "hiring_results";
+  if (current === "intro" || current === "specialise") {
+    if (isOneOf(input, ["Hiring"])) return "hiring";
+    if (isOneOf(input, ["Consulting"])) return "consulting";
+    if (isOneOf(input, ["Exploring"])) return "exploring";
+    if (isOneOf(input, ["Show results"])) return "hiring_results";
+    return "freeform";
   }
 
-  if (current === "hiring_results") {
-    if (t.includes("case") || t.includes("study") || t.includes("project")) return "hiring_experience";
-    if (t.includes("compan") || t.includes("where") || t.includes("work")) return "hiring_experience";
-    return "hiring_cv";
+  if (current === "hiring") {
+    if (isOneOf(input, ["Show results"])) return "hiring_results";
+    if (isOneOf(input, ["Tell me about AI work"])) return "hiring_ai";
+    if (isOneOf(input, ["What's your process?"])) return "hiring_process";
+    return "freeform";
   }
 
-  if (current === "hiring_experience") {
-    if (t.includes("cv") || t.includes("resume") || t.includes("download")) return "hiring_cv";
-    if (t.includes("connect") || t.includes("linkedin") || t.includes("reach")) return "hiring_cv";
-    return "hiring_cv";
+  if (current.startsWith("hiring_")) {
+    if (isOneOf(input, ["Show results"])) return "hiring_results";
+    if (isOneOf(input, ["Tell me about AI work"])) return "hiring_ai";
+    if (isOneOf(input, ["What's your process?"])) return "hiring_process";
+    if (isOneOf(input, ["Show CV", "Open CV"])) return "cv";
+    if (t.includes("connect") || t.includes("linkedin") || t.includes("email")) return "connect";
+    return "freeform";
   }
 
-  if (current === "consulting_problem") {
-    if (t.includes("engagement") || t.includes("how")) return "consulting_how";
-    if (t.includes("ai") || t.includes("build")) return "consulting_lab";
-    return "consulting_how";
+  if (current === "consulting") {
+    if (isOneOf(input, ["Show results"])) return "consulting_results";
+    if (isOneOf(input, ["What can we build?"])) return "consulting_ai";
+    if (isOneOf(input, ["What's your process?"])) return "consulting_process";
+    return "freeform";
   }
 
-  if (current === "consulting_how") {
-    if (t.includes("sprint")) return "consulting_start";
-    if (t.includes("audit")) return "consulting_start";
-    if (t.includes("ai") || t.includes("build")) return "consulting_lab";
-    return "consulting_lab";
+  if (current.startsWith("consulting_")) {
+    if (isOneOf(input, ["Show results"])) return "consulting_results";
+    if (isOneOf(input, ["What can we build?"])) return "consulting_ai";
+    if (isOneOf(input, ["What's your process?"])) return "consulting_process";
+    if (t.includes("connect") || t.includes("linkedin") || t.includes("email")) return "connect";
+    return "freeform";
   }
 
-  if (current === "consulting_lab") {
-    if (t.includes("skip") || t.includes("talk") || t.includes("start")) return "consulting_start";
-    return "consulting_start";
+  if (current === "exploring") {
+    if (isOneOf(input, ["Your story"])) return "exploring_story";
+    if (isOneOf(input, ["Show work"])) return "exploring_work";
+    if (t.includes("connect")) return "connect";
+    return "freeform";
   }
 
-  if (current === "exploring_story") {
-    if (t.includes("ai") || t.includes("spotz")) return "exploring_work";
-    if (t.includes("growth") || t.includes("market")) return "exploring_work";
-    return "exploring_work";
+  if (current.startsWith("exploring_")) {
+    if (isOneOf(input, ["Your story"])) return "exploring_story";
+    if (isOneOf(input, ["Show work"])) return "exploring_work";
+    if (isOneOf(input, ["How you work"])) return "exploring_process";
+    if (isOneOf(input, ["Show CV", "Open CV"])) return "cv";
+    if (t.includes("connect") || t.includes("linkedin") || t.includes("email")) return "connect";
+    return "freeform";
   }
-
-  if (current === "exploring_work") return "connect";
 
   if (current === "connect") {
-    if (t.includes("linkedin")) return "connect";
-    if (t.includes("message") || t.includes("send")) return "connect";
-    return "exploring_story";
+    if (isOneOf(input, ["Show CV", "Open CV"])) return "cv";
+    if (isOneOf(input, ["Open LinkedIn", "Email Felipe"])) return "connect";
+    return "freeform";
+  }
+
+  if (current === "cv") {
+    if (isOneOf(input, ["Want to connect?"])) return "connect";
+    if (isOneOf(input, ["Ask a question"])) return "freeform";
+    if (isOneOf(input, ["Open CV"])) return "cv";
+    return "freeform";
   }
 
   return "freeform";
 }
 
-// ─── Topic detection ──────────────────────────────────────────────
 export function detectTopic(text: string): ConvTopic {
   const t = text.toLowerCase();
-  if (t.match(/result|metric|conver|cac|€|revenue|\+\d+%|recover/)) return "results";
-  if (t.match(/ai|agent|llm|model|neural|workflow|automat|machine/))  return "ai";
-  if (t.match(/growth|funnel|channel|paid|performance|cpc|cpa/))       return "growth";
-  if (t.match(/product|sprint|roadmap|0.*1|build|ship|launch/))        return "product";
-  if (t.match(/experience|compan|spotz|adamo|career|year|work/))       return "experience";
-  if (t.match(/contact|reach|hire|cv|resume|linkedin|email/))          return "contact";
+  if (t.match(/result|metric|conver|cac|revenue|\+\d+%|recover|activation|budget|€|eur/)) return "results";
+  if (t.match(/ai|agent|llm|model|neural|workflow|automat|machine|copilot/)) return "ai";
+  if (t.match(/growth|funnel|channel|paid|performance|cpc|cpa|experiment/)) return "growth";
+  if (t.match(/product|sprint|roadmap|0.*1|build|ship|launch|mvp/)) return "product";
+  if (t.match(/experience|company|spotz|adamo|career|year|work|story/)) return "experience";
+  if (t.match(/contact|reach|hire|cv|resume|linkedin|github|email/)) return "contact";
   return "neutral";
 }
 
-// ─── LLM system prompt ────────────────────────────────────────────
 export const FELIPE_SYSTEM_PROMPT = `You are Felipe Mejia, a senior product builder, growth operator and AI systems designer.
 
 Rules:
 - Respond in EXACTLY 1-2 short sentences (max 35 words total)
 - Be direct, confident, slightly warm — never salesy
 - Focus on what you've shipped and measured, not theory
-- End with a question or an invitation to go deeper
+- End with a question or an invitation to go deeper when natural
 - Never use buzzwords like "leverage", "synergy", "holistic"
 - If asked something you can't answer: "That's outside what I've built — but [redirect to relevant capability]"
 
 Context about Felipe:
-- Built Spotz.pro: AI multi-channel advertising platform (Google, Meta, LinkedIn, TikTok, X, Pinterest) from 0→1
-- Growth Product Manager at Adamo Telecom 2019-2025: digitised onboarding (5 days → same-day), built attribution, owned €3M+ annual performance budget
-- Key results: +25% conversion, −30% CAC, €200K+ recovered, same-day activation
+- Built Spotz.pro: AI multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X and Pinterest
+- Growth Product Manager at Adamo Telecom 2019-2025: digitised onboarding from 5 days to same-day, built attribution, owned €3M+ annual performance budget
+- Key results: +25% conversion, -30% CAC, €200K+ recovered, same-day activation
 - Specialises in: AI workflow design, growth systems, analytics instrumentation, product-led growth
+- Contact: felipe.mejia@spotz.pro, LinkedIn https://www.linkedin.com/in/felipemejiaosorio/, GitHub https://github.com/afmo91
 
 Also return a topic classification as JSON:
 { "reply": "...", "topic": "neutral|results|ai|growth|product|experience|contact" }`;

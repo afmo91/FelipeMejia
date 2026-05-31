@@ -7,6 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
+    "generate:message-audio": "node scripts/generate-message-audio.mjs",
     "generate:cv-pdfs": "node scripts/generate-cv-pdfs.mjs",
     "lint:cv": "node scripts/lint-cv-content.mjs"
   },

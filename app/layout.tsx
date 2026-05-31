@@ -89,15 +89,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         },
       },
       {
-        "@type": "SoftwareApplication",
-        applicationCategory: "BusinessApplication",
-        description:
-          "A lightweight AI diagnostic on Felipe Mejia's portfolio that turns product, growth, and workflow challenges into a scoped signal brief.",
-        name: "AI Signal Lab",
-        operatingSystem: "Web",
-        url: `${siteUrl}/#ai-signal-lab`,
-      },
-      {
         "@type": "WebSite",
         name: "Felipe Mejia",
         url: siteUrl,
