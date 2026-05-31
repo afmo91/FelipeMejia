@@ -41,7 +41,7 @@ export default function ServicesSection() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">
               I help founders, SaaS teams, and growth leaders turn AI workflows, messy data, and funnel friction into focused product work with measurable outcomes.
             </p>
-            <a className="button-primary mt-8 inline-flex" href="#contact">
+            <a className="button-primary mt-8 inline-flex" href="/contact">
               Work with me
             </a>
           </div>

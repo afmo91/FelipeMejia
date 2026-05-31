@@ -26,7 +26,7 @@ export default function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 md:flex-row md:items-center">
         <p>&copy; {new Date().getFullYear()} Felipe Mejia. All rights reserved.</p>
         <nav aria-label="Footer links" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link className="footer-link" href="/#contact">
+          <Link className="footer-link" href="/contact">
             Contact
           </Link>
           {socialLinks.map((link) => (

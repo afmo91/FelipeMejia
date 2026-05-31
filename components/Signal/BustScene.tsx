@@ -131,16 +131,26 @@ function ThinkingRing({ active }: { active: boolean }) {
 }
 
 // ── Ambient background shapes ──────────────────────────────────────
-function AmbientShapes() {
+function AmbientShapes({ topic }: { topic: ConvTopic }) {
   const icoRef = useRef<THREE.Mesh>(null);
   const torRef = useRef<THREE.Mesh>(null);
   const octRef = useRef<THREE.Mesh>(null);
+  const knotRef = useRef<THREE.Mesh>(null);
+
+  const palette = useMemo(() => {
+    if (topic === "ai") return ["#22d3ee", "#8b5cf6", "#ec4899", "#22d3ee"];
+    if (topic === "results") return ["#f59e0b", "#22d3ee", "#8b5cf6", "#f59e0b"];
+    if (topic === "experience") return ["#8b5cf6", "#ec4899", "#22d3ee", "#8b5cf6"];
+    if (topic === "growth") return ["#22d3ee", "#14b8a6", "#8b5cf6", "#22d3ee"];
+    return ["#8b5cf6", "#22d3ee", "#ec4899", "#8b5cf6"];
+  }, [topic]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     if (icoRef.current) { icoRef.current.rotation.x = t * 0.14; icoRef.current.rotation.y = t * 0.22; }
     if (torRef.current) { torRef.current.rotation.x = t * 0.18; torRef.current.rotation.z = t * 0.12; }
     if (octRef.current) { octRef.current.rotation.y = t * 0.16; octRef.current.rotation.z = t * 0.1; }
+    if (knotRef.current) { knotRef.current.rotation.x = t * 0.12; knotRef.current.rotation.y = t * 0.2; }
   });
 
   return (
@@ -148,17 +158,21 @@ function AmbientShapes() {
       {/* Icosahedron — top right — product/structure */}
       <mesh ref={icoRef} position={[2.8, 1.7, -2.8]}>
         <icosahedronGeometry args={[0.95, 1]} />
-        <meshBasicMaterial wireframe color="#8b5cf6" transparent opacity={0.28} />
+        <meshBasicMaterial blending={THREE.AdditiveBlending} color={palette[0]} toneMapped={false} transparent opacity={0.3} wireframe />
       </mesh>
       {/* Torus — bottom left — growth cycles */}
       <mesh ref={torRef} position={[-2.7, -1.6, -2.2]}>
         <torusGeometry args={[0.78, 0.19, 8, 32]} />
-        <meshBasicMaterial wireframe color="#22d3ee" transparent opacity={0.24} />
+        <meshBasicMaterial blending={THREE.AdditiveBlending} color={palette[1]} toneMapped={false} transparent opacity={0.25} wireframe />
       </mesh>
       {/* Octahedron — top background — data/AI */}
       <mesh ref={octRef} position={[0.4, 2.4, -4]}>
         <octahedronGeometry args={[0.72, 0]} />
-        <meshBasicMaterial wireframe color="#ec4899" transparent opacity={0.18} />
+        <meshBasicMaterial blending={THREE.AdditiveBlending} color={palette[2]} toneMapped={false} transparent opacity={0.2} wireframe />
+      </mesh>
+      <mesh ref={knotRef} position={[2.5, -1.2, -3.1]}>
+        <torusKnotGeometry args={[0.42, 0.08, 80, 8]} />
+        <meshBasicMaterial blending={THREE.AdditiveBlending} color={palette[3]} toneMapped={false} transparent opacity={0.24} wireframe />
       </mesh>
     </>
   );
@@ -166,11 +180,11 @@ function AmbientShapes() {
 
 // ── Topic shapes ──────────────────────────────────────────────────
 const METRICS = [
-  { v: "+25%",   l: "Conversion", p: [2.2, 1.2, 0.8]  as [number,number,number] },
-  { v: "€200K+", l: "Recovered",  p: [-2.4, 0.8, 0.5] as [number,number,number] },
-  { v: "5d→1d",  l: "Activation", p: [2.6, -0.6, 0.3] as [number,number,number] },
-  { v: "−30%",   l: "CAC",        p: [-2.2, -1, 0.4]  as [number,number,number] },
-  { v: "€3M+",   l: "Budget",     p: [0.2, 2.2, 0.6]  as [number,number,number] },
+  { v: "+25%",   l: "Conversion", p: [1.18, 1.1, 0.35]   as [number,number,number] },
+  { v: "€200K+", l: "Recovered",  p: [-1.2, 0.82, 0.35]  as [number,number,number] },
+  { v: "5d→1d",  l: "Activation", p: [1.18, -0.72, 0.35] as [number,number,number] },
+  { v: "−30%",   l: "CAC",        p: [-1.18, -0.9, 0.35] as [number,number,number] },
+  { v: "€3M+",   l: "Budget",     p: [0, 1.18, 0.35]     as [number,number,number] },
 ];
 
 function ResultsShapes() {
@@ -228,7 +242,7 @@ function NeuralShapes() {
   }, []);
 
   return (
-    <>
+    <group position={[1.9, 0, -1.1]} scale={0.72}>
       <lineSegments geometry={lineGeometry}>
         <lineBasicMaterial color="#8b5cf6" transparent opacity={0.3} />
       </lineSegments>
@@ -242,7 +256,7 @@ function NeuralShapes() {
         <sphereGeometry args={[0.09, 8, 8]} />
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.9} blending={THREE.AdditiveBlending} />
       </mesh>
-    </>
+    </group>
   );
 }
 
@@ -253,7 +267,7 @@ function GrowthShapes() {
     if (groupRef.current) groupRef.current.rotation.y = clock.elapsedTime * 0.15;
   });
   return (
-    <group ref={groupRef} position={[1.5, 0, 0.5]}>
+    <group ref={groupRef} position={[2, -0.1, -0.9]} scale={0.82}>
       {RINGS.map((r, i) => (
         <mesh key={i} position={[0, 1.2 - i * 0.52, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[r, 0.025, 8, 36]} />
@@ -265,28 +279,49 @@ function GrowthShapes() {
 }
 
 function ProductShapes() {
-  const refs = [useRef<THREE.Mesh>(null), useRef<THREE.Mesh>(null), useRef<THREE.Mesh>(null), useRef<THREE.Mesh>(null)];
+  const tetraRef = useRef<THREE.Mesh>(null);
+  const boxRef = useRef<THREE.Mesh>(null);
+  const octRef = useRef<THREE.Mesh>(null);
+  const dodecaRef = useRef<THREE.Mesh>(null);
+
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    refs[0].current && (refs[0].current.rotation.x = t * 0.22, refs[0].current.rotation.y = t * 0.18);
-    refs[1].current && (refs[1].current.rotation.y = t * 0.2,  refs[1].current.rotation.z = t * 0.14);
-    refs[2].current && (refs[2].current.rotation.x = t * 0.16, refs[2].current.rotation.z = t * 0.22);
-    refs[3].current && (refs[3].current.rotation.y = t * 0.24, refs[3].current.rotation.x = t * 0.12);
+    if (tetraRef.current) {
+      tetraRef.current.rotation.x = t * 0.22;
+      tetraRef.current.rotation.y = t * 0.18;
+    }
+    if (boxRef.current) {
+      boxRef.current.rotation.y = t * 0.2;
+      boxRef.current.rotation.z = t * 0.14;
+    }
+    if (octRef.current) {
+      octRef.current.rotation.x = t * 0.16;
+      octRef.current.rotation.z = t * 0.22;
+    }
+    if (dodecaRef.current) {
+      dodecaRef.current.rotation.y = t * 0.24;
+      dodecaRef.current.rotation.x = t * 0.12;
+    }
   });
-  const shapes = [
-    { geo: <tetrahedronGeometry args={[0.5, 0]} />,  pos: [-2, 1.3, 0.8],   color: "#8b5cf6" },
-    { geo: <boxGeometry args={[0.75, 0.75, 0.75]} />, pos: [2, 1.2, 0.8],   color: "#22d3ee" },
-    { geo: <octahedronGeometry args={[0.52, 0]} />,   pos: [-2, -0.9, 0.8], color: "#ec4899" },
-    { geo: <dodecahedronGeometry args={[0.44, 0]} />, pos: [2, -1, 0.8],    color: "#8b5cf6" },
-  ] as const;
+
   return (
     <>
-      {shapes.map(({ geo, pos, color }, i) => (
-        <mesh key={i} ref={refs[i]} position={pos as [number,number,number]}>
-          {geo}
-          <meshBasicMaterial wireframe color={color} transparent opacity={0.55} />
-        </mesh>
-      ))}
+      <mesh ref={tetraRef} position={[-2, 1.3, 0.8]}>
+        <tetrahedronGeometry args={[0.5, 0]} />
+        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.55} wireframe />
+      </mesh>
+      <mesh ref={boxRef} position={[2, 1.2, 0.8]}>
+        <boxGeometry args={[0.75, 0.75, 0.75]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.55} wireframe />
+      </mesh>
+      <mesh ref={octRef} position={[-2, -0.9, 0.8]}>
+        <octahedronGeometry args={[0.52, 0]} />
+        <meshBasicMaterial color="#ec4899" transparent opacity={0.55} wireframe />
+      </mesh>
+      <mesh ref={dodecaRef} position={[2, -1, 0.8]}>
+        <dodecahedronGeometry args={[0.44, 0]} />
+        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.55} wireframe />
+      </mesh>
     </>
   );
 }
@@ -311,7 +346,7 @@ function ExperienceShapes() {
   }, []);
 
   return (
-    <>
+    <group position={[0, -1.35, -1]} scale={0.8}>
       <lineSegments geometry={lineGeo}>
         <lineBasicMaterial color="#8b5cf6" transparent opacity={0.3} />
       </lineSegments>
@@ -326,7 +361,7 @@ function ExperienceShapes() {
           </Html>
         </group>
       ))}
-    </>
+    </group>
   );
 }
 
@@ -340,7 +375,7 @@ function TopicShapes({ topic }: { topic: ConvTopic }) {
 }
 
 // ── Main bust mesh ────────────────────────────────────────────────
-function GlbBust({ bustState, amplitudeRef, onAssembled }: {
+function AnimatedBust({ bustState, amplitudeRef, onAssembled }: {
   bustState: BustState;
   amplitudeRef: React.RefObject<number>;
   onAssembled: () => void;
@@ -348,6 +383,8 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
   const { scene } = useGLTF(MODEL_URL);
   const groupRef  = useRef<THREE.Group>(null);
   const ptRef     = useRef<THREE.Points>(null);
+  const shellMatRef = useRef<THREE.MeshStandardMaterial>(null);
+  const mouthGlowRef = useRef<THREE.Mesh>(null);
   const ptrRef    = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const workRef   = useRef<Float32Array | null>(null);
   const assembleP = useRef(0);
@@ -414,7 +451,9 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
         const ox = origPos[i * 3];
         const oz = origPos[i * 3 + 2];
 
-        let dx = 0, dy = breathY, dz = 0;
+        const dx = 0;
+        let dy = breathY;
+        let dz = 0;
 
         if (reg === 1) {
           // Mouth vertices — open downward with amplitude
@@ -426,6 +465,8 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
         } else if (reg === 3 && bustState === "thinking") {
           // Eye area — subtle brightening (move slightly forward)
           dz += Math.sin(t * 3 + i) * 0.006;
+        } else if (reg === 3 && bustState === "listening") {
+          dz += 0.012 + Math.sin(t * 2 + i) * 0.003;
         } else if (reg === 4 && bustState === "thinking") {
           // Brow — raises slightly
           dy += 0.018 + Math.sin(t * 2) * 0.005;
@@ -440,15 +481,33 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
 
     // ── Group rotation & position ─────────────────────────────────
     const isThinking = bustState === "thinking";
-    const targetZ   = isThinking ? -0.22 : 0;
-    const targetX   = isThinking ? 0.12 : -p.y * 0.11;
-    const targetY   = isThinking ? Math.sin(state.clock.elapsedTime * 0.3) * 0.08 : p.x * 0.2;
+    const isListening = bustState === "listening";
+    const targetZ   = isThinking ? -0.26 : isListening ? 0.03 : 0;
+    const targetX   = isThinking ? 0.16 : isListening ? -0.08 : -p.y * 0.11;
+    const targetY   = isThinking ? -0.15 + Math.sin(state.clock.elapsedTime * 0.3) * 0.05 : p.x * 0.2;
     const targetPosY = Math.sin(state.clock.elapsedTime * 0.5) * 0.022; // breathing
+    const targetPosZ = isListening ? 0.1 : 0;
 
     group.rotation.z = THREE.MathUtils.lerp(group.rotation.z, targetZ, 0.05);
     group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetX, 0.055);
     group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, targetY, 0.055);
     group.position.y = THREE.MathUtils.lerp(group.position.y, targetPosY, 0.04);
+    group.position.z = THREE.MathUtils.lerp(group.position.z, targetPosZ, 0.05);
+
+    if (shellMatRef.current) {
+      const targetIntensity =
+        bustState === "speaking" ? 0.08 + amp * 0.55 :
+        bustState === "thinking" ? 0.2 :
+        bustState === "listening" ? 0.16 : 0.1;
+      shellMatRef.current.emissiveIntensity = THREE.MathUtils.lerp(shellMatRef.current.emissiveIntensity, targetIntensity, 0.12);
+    }
+
+    if (mouthGlowRef.current) {
+      const material = mouthGlowRef.current.material as THREE.MeshBasicMaterial;
+      const active = bustState === "speaking";
+      material.opacity = THREE.MathUtils.lerp(material.opacity, active ? Math.min(0.1, amp * 0.18) : 0, 0.18);
+      mouthGlowRef.current.scale.set(1 + amp * 0.45, 0.18 + amp * 0.18, 1);
+    }
 
     // ── Camera subtle drift ───────────────────────────────────────
     state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, p.x * 0.06, 0.03);
@@ -456,8 +515,10 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
     state.camera.lookAt(0, -0.1, 0);
   });
 
-  const emissiveColor = bustState === "thinking" ? "#f59e0b" : "#8b5cf6";
-  const ptOpacity = bustState === "speaking" ? 0.52 : 0.44;
+  const emissiveColor =
+    bustState === "thinking" ? "#f59e0b" :
+    bustState === "speaking" || bustState === "listening" ? "#22d3ee" : "#8b5cf6";
+  const ptOpacity = bustState === "speaking" ? 0.56 : bustState === "listening" ? 0.5 : 0.44;
 
   return (
     <group ref={groupRef} scale={0.86}>
@@ -465,8 +526,12 @@ function GlbBust({ bustState, amplitudeRef, onAssembled }: {
         <meshBasicMaterial colorWrite={false} depthWrite />
       </mesh>
       <mesh geometry={geo} renderOrder={2}>
-        <meshStandardMaterial color="#dfe7ff" emissive={emissiveColor} emissiveIntensity={0.1}
+        <meshStandardMaterial ref={shellMatRef} color="#dfe7ff" emissive={emissiveColor} emissiveIntensity={0.1}
           metalness={0.1} roughness={0.35} opacity={0.06} transparent />
+      </mesh>
+      <mesh ref={mouthGlowRef} position={[0, -0.14, 0.92]} renderOrder={5}>
+        <circleGeometry args={[0.08, 24]} />
+        <meshBasicMaterial blending={THREE.AdditiveBlending} color="#22d3ee" depthWrite={false} opacity={0} side={THREE.DoubleSide} toneMapped={false} transparent />
       </mesh>
       <mesh geometry={geo} renderOrder={3}>
         <meshBasicMaterial blending={THREE.AdditiveBlending} color="#f8fbff"
@@ -536,10 +601,10 @@ export default function BustScene({ bustState, topic, amplitudeRef, onAssembled 
               dpr={[1, 1.7]}
               gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}>
               <Lights bustState={bustState} />
-              <AmbientShapes />
+              <AmbientShapes topic={topic} />
               <TopicShapes topic={topic} />
               <ThinkingRing active={bustState === "thinking"} />
-              <GlbBust bustState={bustState} amplitudeRef={amplitudeRef} onAssembled={onAssembled} />
+              <AnimatedBust bustState={bustState} amplitudeRef={amplitudeRef} onAssembled={onAssembled} />
             </Canvas>
           </Suspense>
         </div>

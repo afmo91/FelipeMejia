@@ -6,111 +6,34 @@ import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/#how-i-help", label: "Services" },
-  { href: "/#ai-signal-lab", label: "AI Lab" },
-  { href: "/#results", label: "Results" },
-  { href: "/#experience", label: "Experience" },
-  { href: "/#case-studies", label: "Work" },
   { href: "/blog", label: "Blog" },
-  { href: "/#contact", label: "Contact" },
+  { href: "/cv", label: "CV" },
+  { href: "/contact", label: "Contact" },
   { href: "/login", label: "Login" },
 ];
 
-function isActiveLink(pathname: string, hash: string, href: string) {
-  if (href.startsWith("/#")) {
-    return pathname === "/" && hash === href.slice(1);
-  }
-
-  if (href === "/") {
-    return pathname === "/" && !hash;
-  }
-
-  return pathname.startsWith(href);
+function isActiveLink(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const [hash, setHash] = useState("");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
+      if (event.key === "Escape") setOpen(false);
     }
 
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [open]);
 
-  useEffect(() => {
-    const updateHash = () => setHash(window.location.hash);
-    updateHash();
-    window.addEventListener("hashchange", updateHash);
-    return () => window.removeEventListener("hashchange", updateHash);
-  }, []);
-
-  useEffect(() => {
-    if (pathname !== "/") {
-      return;
-    }
-
-    let frame = 0;
-    const sectionIds = ["how-i-help", "ai-signal-lab", "results", "experience", "case-studies", "contact"];
-
-    function updateActiveSection() {
-      if (frame) {
-        return;
-      }
-
-      frame = window.requestAnimationFrame(() => {
-        if (window.scrollY < 240) {
-          setHash("");
-          frame = 0;
-          return;
-        }
-
-        const viewportAnchor = window.innerHeight * 0.38;
-        let active = "";
-        let closest = Number.POSITIVE_INFINITY;
-
-        sectionIds.forEach((id) => {
-          const element = document.getElementById(id);
-          if (!element) {
-            return;
-          }
-          const rect = element.getBoundingClientRect();
-          const distance = Math.abs(rect.top - viewportAnchor);
-          if (rect.bottom > 120 && distance < closest) {
-            closest = distance;
-            active = `#${id}`;
-          }
-        });
-
-        setHash(active);
-        frame = 0;
-      });
-    }
-
-    updateActiveSection();
-    window.addEventListener("scroll", updateActiveSection, { passive: true });
-    window.addEventListener("resize", updateActiveSection);
-    return () => {
-      window.removeEventListener("scroll", updateActiveSection);
-      window.removeEventListener("resize", updateActiveSection);
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-    };
-  }, [pathname]);
-
   const renderLink = ({ href, label }: (typeof navItems)[number]) => {
-    const active = isActiveLink(pathname, hash, href);
+    const active = isActiveLink(pathname, href);
     return (
       <Link
         aria-current={active ? "page" : undefined}
@@ -145,12 +68,12 @@ export default function SiteHeader() {
           aria-controls="mobile-navigation"
           aria-expanded={open}
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-          className="inline-flex h-10 w-10 items-center justify-center border border-white/15 text-white transition hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 text-white transition hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:hidden"
           onClick={() => setOpen((current) => !current)}
           type="button"
         >
           <span className="sr-only">{open ? "Close" : "Menu"}</span>
-          <span className="flex w-4 flex-col gap-1.5" aria-hidden="true">
+          <span aria-hidden="true" className="flex w-4 flex-col gap-1.5">
             <span className={`h-px bg-current transition ${open ? "translate-y-1.5 rotate-45" : ""}`} />
             <span className={`h-px bg-current transition ${open ? "opacity-0" : ""}`} />
             <span className={`h-px bg-current transition ${open ? "-translate-y-1.5 -rotate-45" : ""}`} />
@@ -158,10 +81,7 @@ export default function SiteHeader() {
         </button>
       </nav>
 
-      <div
-        className={`${open ? "block" : "hidden"} border-t border-white/10 bg-black/95 md:hidden`}
-        id="mobile-navigation"
-      >
+      <div className={`${open ? "block" : "hidden"} border-t border-white/10 bg-black/95 md:hidden`} id="mobile-navigation">
         <nav aria-label="Mobile navigation" className="mx-auto grid max-w-7xl gap-1 px-6 py-5">
           {navItems.map(renderLink)}
         </nav>
