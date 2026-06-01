@@ -1,7 +1,15 @@
 import type { CaseStudyId } from "@/data/caseStudies";
 import type { SystemId } from "@/data/systems";
 
-export type FelipeOSView = "command" | "services" | "systems" | "case-studies" | "experience" | "cv" | "contact";
+export type FelipeOSView =
+  | "command"
+  | "services"
+  | "systems"
+  | "case-studies"
+  | "experience"
+  | "cv"
+  | "hey-felipe"
+  | "contact";
 
 export type ChatRoute = {
   prompt: string;

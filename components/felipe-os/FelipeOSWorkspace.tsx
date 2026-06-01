@@ -1,8 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { caseStudies, type CaseStudyId } from "@/data/caseStudies";
 import { experienceEntries } from "@/data/experience";
 import { quickPrompts, type FelipeOSView } from "@/data/chatFlows";
@@ -29,68 +28,81 @@ type PublicCVData = {
   languages?: string[];
 };
 
-const tabs: Array<{ id: FelipeOSView; label: string }> = [
-  { id: "command", label: "Command Center" },
+type RouteIntent = {
+  view: FelipeOSView;
+  response: string;
+  systemId?: SystemId;
+  caseStudyId?: CaseStudyId;
+};
+
+type DockItem = {
+  id: FelipeOSView;
+  label: string;
+  icon: string;
+};
+
+const dockItems: DockItem[] = [
+  { id: "command", label: "Command Center", icon: "C" },
+  { id: "services", label: "Services", icon: "S" },
+  { id: "systems", label: "Systems", icon: "Y" },
+  { id: "case-studies", label: "Proof", icon: "P" },
+  { id: "experience", label: "Experience", icon: "E" },
+  { id: "cv", label: "CV", icon: "V" },
+  { id: "hey-felipe", label: "Hey Felipe", icon: "HF" },
+  { id: "contact", label: "Contact", icon: "@" },
+];
+
+const navItems: Array<{ id: FelipeOSView; label: string }> = [
+  { id: "command", label: "Home" },
   { id: "services", label: "Services" },
   { id: "systems", label: "Systems" },
-  { id: "case-studies", label: "Proof of Work" },
+  { id: "case-studies", label: "Proof" },
   { id: "experience", label: "Experience" },
   { id: "cv", label: "CV" },
   { id: "contact", label: "Contact" },
 ];
 
 const proofMetrics = [
-  ["+25%", "conversion", "Experimentation"],
-  ["-30%", "CAC", "Acquisition"],
-  ["€200K+", "recovered", "Attribution"],
-  ["5 days → same-day", "activation", "Onboarding"],
-  ["€3M+", "annual media budget managed", "Scale"],
+  ["+25%", "conversion"],
+  ["-30%", "CAC"],
+  ["€200K+", "recovered"],
+  ["5 days -> same-day", "activation"],
+  ["€3M+", "annual media budget"],
 ];
 
-const systemMapModules: Array<{
-  title: string;
-  description: string;
-  systemId?: SystemId;
-  view?: FelipeOSView;
-}> = [
-  {
-    title: "AI Assistants",
-    description: "AI embedded in real workflows.",
-    systemId: "ai-assistants",
+const viewMeta: Record<FelipeOSView, { title: string; context: string }> = {
+  command: {
+    title: "Command Center",
+    context: "AI systems, growth infrastructure, automation",
   },
-  {
-    title: "Agentic Workflows",
-    description: "From messy process to operating system.",
-    systemId: "agentic-workflows",
+  services: {
+    title: "Services",
+    context: "Workflow sprint, growth audit, assistant build, MVP build",
   },
-  {
-    title: "Automation & APIs",
-    description: "Connected tools without copy-paste.",
-    systemId: "automation-integrations",
+  systems: {
+    title: "Systems",
+    context: "Agents, APIs, dashboards, integrations",
   },
-  {
-    title: "Growth Systems",
-    description: "Growth infrastructure, not just campaigns.",
-    systemId: "growth-systems",
-  },
-  {
-    title: "Product Dashboards",
-    description: "Dashboards that drive decisions.",
-    systemId: "product-builds",
-  },
-  {
+  "case-studies": {
     title: "Proof of Work",
-    description: "Representative builds and commercial outcomes.",
-    view: "case-studies",
+    context: "Safe representative systems and commercial value",
   },
-];
-
-type RouteIntent = {
-  view: FelipeOSView;
-  response: string;
-  systemId?: SystemId;
-  caseStudyId?: CaseStudyId;
-  nextActions: string[];
+  experience: {
+    title: "Experience",
+    context: "Product, growth and automation under commercial pressure",
+  },
+  cv: {
+    title: "Public CV",
+    context: "Public profile + downloadable CV",
+  },
+  "hey-felipe": {
+    title: "Hey Felipe",
+    context: "Command app and lightweight assistant",
+  },
+  contact: {
+    title: "Contact",
+    context: EMAIL,
+  },
 };
 
 function routeMessage(input: string): RouteIntent {
@@ -98,63 +110,48 @@ function routeMessage(input: string): RouteIntent {
   if (exact) return exact;
 
   const text = input.toLowerCase();
+  if (text.match(/service|offer|sprint|audit|buy|price|help|company|client/)) {
+    return {
+      view: "services",
+      response: "Open Services. The clearest entry points are workflow sprint, growth audit, assistant build, and product/MVP build.",
+    };
+  }
+  if (text.match(/proof|case|portfolio|work|example|result|growth|cac|roas|ads|attribution/)) {
+    return {
+      view: "case-studies",
+      caseStudyId: text.includes("lead") ? "b2b-lead-crm-automation" : "paid-media-operating-layer",
+      response: "Open Proof of Work. The examples are representative and safe: problem, system built, commercial value, and capabilities.",
+    };
+  }
+  if (text.match(/system|ai|assistant|agent|workflow|automation|integration|crm|api|dashboard/)) {
+    return {
+      view: "systems",
+      systemId: text.includes("dashboard") ? "product-dashboards" : text.includes("assistant") ? "ai-assistants" : "agentic-workflows",
+      response: "Open Systems. The useful pattern is intake, context, decision, action, and feedback.",
+    };
+  }
   if (text.match(/cv|resume|role|recruit|job/)) {
     return {
       view: "cv",
-      response: "The public CV is visible and downloadable. Admin stays private for tailoring, but the professional profile is public.",
-      nextActions: ["Show experience", "Show proof of work", "Contact Felipe"],
+      response: "Open CV. The public CV is visible and downloadable without login.",
     };
   }
   if (text.match(/contact|email|linkedin|hire|call|github/)) {
     return {
       view: "contact",
-      response: "Best path: send the messy workflow or role context by email, then we can scope the highest-value system.",
-      nextActions: ["Explore services", "Open CV", "Show proof of work"],
-    };
-  }
-  if (text.match(/service|offer|sprint|audit|buy|price|build|company|client/)) {
-    return {
-      view: "services",
-      response: "The commercial offers are packaged around useful outcomes: workflow sprint, growth audit, AI assistant build or product/MVP build.",
-      nextActions: ["Show proof of work", "Contact Felipe", "Open CV"],
-    };
-  }
-  if (text.match(/growth|cac|conversion|ads|attribution|roas|funnel|result|proof/)) {
-    return {
-      view: "case-studies",
-      caseStudyId: "growth-audit-experimentation-system",
-      response: "For growth work, I connect acquisition, landing pages, attribution and experiments into one measurable loop.",
-      nextActions: ["Explore services", "Show me AI systems", "Contact Felipe"],
-    };
-  }
-  if (text.match(/case|portfolio|work|proof|example/)) {
-    return {
-      view: "case-studies",
-      caseStudyId: "paid-media-operating-layer",
-      response: "Proof of Work shows safe representative systems: the problem, what was built, commercial value and capabilities.",
-      nextActions: ["Explore services", "Show me AI systems", "Contact Felipe"],
-    };
-  }
-  if (text.match(/ai|assistant|agent|workflow|automation|integration|crm|api/)) {
-    return {
-      view: "systems",
-      systemId: text.includes("assistant") ? "ai-assistants" : "agentic-workflows",
-      response: "The best AI systems start as clear operational loops: intake, context, decision, action and feedback.",
-      nextActions: ["Show proof of work", "Show growth results", "Contact Felipe"],
+      response: "Open Contact. Send the workflow, tools, bottleneck, and target metric.",
     };
   }
   if (text.match(/experience|adamo|spotz|segmentta|career/)) {
     return {
       view: "experience",
-      response: "My experience sits where product delivery, growth pressure and automation meet.",
-      nextActions: ["Open CV", "Show proof of work", "Contact Felipe"],
+      response: "Open Experience. The career line is product and growth under commercial pressure.",
     };
   }
 
   return {
     view: "services",
-    response: "I would start by mapping the workflow, finding the missing signal, then building the smallest useful system that changes the team's cadence.",
-    nextActions: ["Explore services", "Show proof of work", "Contact Felipe"],
+    response: "Start with Services. Bring the messy process and I will map the smallest useful system worth shipping.",
   };
 }
 
@@ -162,7 +159,19 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   const [activeView, setActiveView] = useState<FelipeOSView>("command");
   const [activeSystemId, setActiveSystemId] = useState<SystemId>("ai-assistants");
   const [activeCaseId, setActiveCaseId] = useState<CaseStudyId>("paid-media-operating-layer");
-  const [chatOpen, setChatOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+
+  useEffect(() => {
+    function openCommand(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setActiveView("hey-felipe");
+      }
+    }
+
+    window.addEventListener("keydown", openCommand);
+    return () => window.removeEventListener("keydown", openCommand);
+  }, []);
 
   function applyIntent(intent: RouteIntent) {
     setActiveView(intent.view);
@@ -171,16 +180,17 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#030306] px-3 py-3 text-slate-100 sm:px-5 sm:py-5 lg:px-8 lg:py-7">
-      <StageAmbient />
-      <FelipeOSFrame
+    <main className="relative min-h-screen overflow-hidden bg-[#05050b] text-slate-100">
+      <DesktopBackground />
+      <TopMenuBar activeView={activeView} onCommandOpen={() => setActiveView("hey-felipe")} onViewChange={setActiveView} />
+      <DesktopShell
         activeCaseId={activeCaseId}
         activeSystemId={activeSystemId}
         activeView={activeView}
-        chatOpen={chatOpen}
+        focusMode={focusMode}
         onActiveCaseChange={setActiveCaseId}
         onActiveSystemChange={setActiveSystemId}
-        onChatOpenChange={setChatOpen}
+        onFocusModeChange={setFocusMode}
         onIntent={applyIntent}
         onViewChange={setActiveView}
         publicCV={publicCV}
@@ -189,441 +199,599 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   );
 }
 
-export function StageAmbient() {
+function DesktopBackground() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0">
       <motion.div
-        animate={{ opacity: [0.18, 0.34, 0.18], x: [-18, 18, -18] }}
-        className="absolute left-[-12%] top-[8%] h-44 w-[64%] -rotate-12 bg-[linear-gradient(90deg,rgba(139,92,246,0.24),rgba(34,211,238,0.05),transparent)] blur-3xl"
-        transition={{ duration: 9, ease: "easeInOut", repeat: Infinity }}
+        animate={{ opacity: [0.18, 0.36, 0.18], x: [-20, 22, -20], y: [-8, 10, -8] }}
+        className="absolute left-[-14%] top-[10%] h-72 w-[62%] -rotate-12 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.32),rgba(34,211,238,0.08)_46%,transparent_70%)] blur-3xl"
+        transition={{ duration: 12, ease: "easeInOut", repeat: Infinity }}
       />
       <motion.div
-        animate={{ opacity: [0.12, 0.3, 0.12], x: [16, -16, 16] }}
-        className="absolute bottom-[8%] right-[-10%] h-48 w-[68%] rotate-12 bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.2),rgba(139,92,246,0.12))] blur-3xl"
-        transition={{ duration: 10, ease: "easeInOut", repeat: Infinity }}
+        animate={{ opacity: [0.14, 0.28, 0.14], x: [18, -18, 18], y: [8, -10, 8] }}
+        className="absolute bottom-[2%] right-[-16%] h-80 w-[58%] rotate-12 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.24),rgba(139,92,246,0.1)_42%,transparent_68%)] blur-3xl"
+        transition={{ duration: 14, ease: "easeInOut", repeat: Infinity }}
       />
-      <div className="absolute inset-0 opacity-[0.09] [background-image:linear-gradient(rgba(255,255,255,.55)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.55)_1px,transparent_1px)] [background-size:64px_64px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),transparent_34%),linear-gradient(180deg,transparent,rgba(0,0,0,0.74))]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.55)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.55)_1px,transparent_1px)] [background-size:56px_56px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_42%_18%,rgba(255,255,255,0.08),transparent_26%),linear-gradient(180deg,rgba(3,3,8,0.15),rgba(0,0,0,0.8))]" />
     </div>
   );
 }
 
-function FelipeOSFrame(props: {
+function TopMenuBar({
+  activeView,
+  onCommandOpen,
+  onViewChange,
+}: {
+  activeView: FelipeOSView;
+  onCommandOpen: () => void;
+  onViewChange: (view: FelipeOSView) => void;
+}) {
+  return (
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-black/45 px-3 py-2 backdrop-blur-2xl sm:px-5">
+      <div className="flex h-8 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            className="group flex min-w-0 items-center gap-2 rounded-full px-2 py-1 text-left outline-none transition hover:bg-white/[0.055] focus-visible:bg-white/[0.08]"
+            onClick={() => onViewChange("command")}
+            type="button"
+          >
+            <span className="grid h-6 w-6 flex-none place-items-center rounded-lg bg-[linear-gradient(135deg,#8b5cf6,#22d3ee)] text-[0.7rem] font-bold text-white shadow-[0_0_24px_rgba(139,92,246,0.25)]">
+              F
+            </span>
+            <span className="font-semibold text-white">FelipeOS</span>
+          </button>
+
+          <nav aria-label="FelipeOS apps" className="hidden min-w-0 gap-1 overflow-x-auto lg:flex">
+            {navItems.map((item) => (
+              <button
+                aria-current={activeView === item.id ? "page" : undefined}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium outline-none transition ${
+                  activeView === item.id
+                    ? "bg-white/[0.09] text-white"
+                    : "text-slate-400 hover:bg-white/[0.055] hover:text-slate-100 focus-visible:bg-white/[0.08]"
+                }`}
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                type="button"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <span className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.55)]" />
+            Available for builds & advisory
+          </span>
+          <span className="flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1.5 text-xs font-medium text-emerald-100 sm:hidden">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            Available
+          </span>
+          <button
+            aria-label="Open Hey Felipe command app"
+            className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-xs font-medium text-slate-200 outline-none transition hover:border-cyan-300/30 hover:bg-cyan-300/10 focus-visible:border-cyan-200/50"
+            onClick={onCommandOpen}
+            type="button"
+          >
+            <span className="sm:hidden">Search</span>
+            <span className="hidden sm:inline">Command</span>
+          </button>
+          <a aria-label="LinkedIn" className="hidden rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-cyan-300/30 hover:text-white md:inline-flex" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
+            in
+          </a>
+          <a aria-label="GitHub" className="hidden rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-cyan-300/30 hover:text-white md:inline-flex" href={GITHUB} rel="noopener noreferrer" target="_blank">
+            gh
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function DesktopShell(props: {
   activeCaseId: CaseStudyId;
   activeSystemId: SystemId;
   activeView: FelipeOSView;
-  chatOpen: boolean;
+  focusMode: boolean;
   onActiveCaseChange: (id: CaseStudyId) => void;
   onActiveSystemChange: (id: SystemId) => void;
-  onChatOpenChange: (open: boolean) => void;
+  onFocusModeChange: (value: boolean) => void;
   onIntent: (intent: RouteIntent) => void;
   onViewChange: (view: FelipeOSView) => void;
   publicCV: PublicCVData;
 }) {
   return (
-    <section className="relative z-10 mx-auto flex h-[calc(100vh-1.5rem)] w-full max-w-[1480px] flex-col overflow-hidden rounded-[24px] border border-white/12 bg-[linear-gradient(145deg,rgba(13,13,22,0.9),rgba(6,10,18,0.86)_52%,rgba(20,12,36,0.78))] shadow-[0_34px_120px_rgba(0,0,0,0.58)] backdrop-blur-2xl sm:h-[calc(100vh-2.5rem)] sm:rounded-[28px]">
-      <OSWindowTopBar />
-      <OSTabBar activeView={props.activeView} onViewChange={props.onViewChange} />
-      <StagePane
+    <div className={`relative z-10 flex min-h-screen flex-col px-3 pb-24 pt-14 sm:px-5 lg:pl-8 ${props.focusMode ? "lg:pr-8" : "lg:pr-[23.5rem]"}`}>
+      {!props.focusMode ? <RightWidgetStack activeView={props.activeView} onViewChange={props.onViewChange} /> : null}
+
+      <MainAppWindow
         activeCaseId={props.activeCaseId}
         activeSystemId={props.activeSystemId}
         activeView={props.activeView}
+        focusMode={props.focusMode}
         onActiveCaseChange={props.onActiveCaseChange}
         onActiveSystemChange={props.onActiveSystemChange}
-        onChatOpenChange={props.onChatOpenChange}
+        onClose={() => props.onViewChange("command")}
+        onFocusModeChange={props.onFocusModeChange}
+        onIntent={props.onIntent}
         onViewChange={props.onViewChange}
         publicCV={props.publicCV}
       />
-      <HeyFelipeDock
-        chatOpen={props.chatOpen}
-        onChatOpenChange={props.onChatOpenChange}
-        onIntent={props.onIntent}
-      />
-    </section>
-  );
-}
 
-function OSWindowTopBar() {
-  return (
-    <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-white/[0.025] px-3 py-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="min-w-0">
-          <h1 className="truncate text-sm font-semibold text-white sm:text-base">FelipeOS</h1>
-        </div>
-        <span className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs font-medium text-cyan-100 sm:inline-flex">
-          Product / Growth / AI systems
-        </span>
-      </div>
-      <div className="flex min-w-0 items-center justify-end gap-2">
-        <div className="flex items-center rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
-          <span className="sm:hidden">Available</span>
-          <span className="hidden sm:inline">Available for builds and advisory</span>
-        </div>
-        <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-xs font-medium text-slate-300">
-          ⌘K Hey Felipe
-        </span>
-      </div>
+      <BottomDock activeView={props.activeView} onViewChange={props.onViewChange} />
     </div>
   );
 }
 
-function OSTabBar({ activeView, onViewChange }: { activeView: FelipeOSView; onViewChange: (view: FelipeOSView) => void }) {
+function MainAppWindow(props: {
+  activeCaseId: CaseStudyId;
+  activeSystemId: SystemId;
+  activeView: FelipeOSView;
+  focusMode: boolean;
+  onActiveCaseChange: (id: CaseStudyId) => void;
+  onActiveSystemChange: (id: SystemId) => void;
+  onClose: () => void;
+  onFocusModeChange: (value: boolean) => void;
+  onIntent: (intent: RouteIntent) => void;
+  onViewChange: (view: FelipeOSView) => void;
+  publicCV: PublicCVData;
+}) {
+  const meta = viewMeta[props.activeView];
+
   return (
-    <nav aria-label="FelipeOS workspace navigation" className="border-b border-white/10 px-2 py-2 sm:px-4">
-      <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {tabs.map((tab) => (
+    <section
+      className={`mt-3 flex min-h-[calc(100vh-9.5rem)] w-full flex-col overflow-hidden rounded-[22px] border border-white/12 bg-[linear-gradient(145deg,rgba(13,13,22,0.88),rgba(6,11,20,0.78)_58%,rgba(18,11,34,0.72))] shadow-[0_28px_110px_rgba(0,0,0,0.58)] backdrop-blur-2xl sm:mt-5 sm:min-h-[calc(100vh-10rem)] ${
+        props.focusMode ? "max-w-none" : "mx-auto max-w-5xl lg:mx-0 lg:w-[min(64vw,960px)]"
+      }`}
+    >
+      <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-white/[0.025] px-4 py-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-semibold text-white sm:text-base">{meta.title}</h1>
+          <p className="hidden truncate text-xs text-slate-400 sm:block">{meta.context}</p>
+        </div>
+        <div className="flex items-center gap-2">
           <button
-            aria-current={activeView === tab.id ? "page" : undefined}
-            className={`relative flex-none rounded-full px-3.5 py-2 text-xs font-medium outline-none transition sm:px-4 ${
-              activeView === tab.id
-                ? "text-white"
-                : "text-slate-400 hover:bg-white/[0.045] hover:text-slate-100 focus-visible:bg-white/[0.06]"
-            }`}
-            key={tab.id}
-            onClick={() => onViewChange(tab.id)}
+            className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-cyan-300/30 hover:text-white"
+            onClick={() => props.onFocusModeChange(!props.focusMode)}
             type="button"
           >
-            {activeView === tab.id ? (
-              <motion.span
-                className="absolute inset-0 rounded-full border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.24),rgba(34,211,238,0.12))] shadow-[0_0_28px_rgba(139,92,246,0.22)]"
-                layoutId="felipe-os-active-tab"
+            {props.focusMode ? "Exit focus" : "Focus"}
+          </button>
+          {props.activeView !== "command" ? (
+            <button
+              className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-purple-300/30 hover:text-white"
+              onClick={props.onClose}
+              type="button"
+            >
+              Close
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 [scrollbar-width:none] sm:px-5 sm:py-5 [&::-webkit-scrollbar]:hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: 10 }}
+            key={props.activeView}
+            transition={{ duration: 0.24, ease: "easeOut" }}
+          >
+            {props.activeView === "command" ? (
+              <CommandCenterApp
+                onOpenHeyFelipe={() => props.onViewChange("hey-felipe")}
+                onOpenSystem={(id) => {
+                  props.onActiveSystemChange(id);
+                  props.onViewChange("systems");
+                }}
+                onViewChange={props.onViewChange}
               />
             ) : null}
-            <span className="relative">{tab.label}</span>
-            {activeView === tab.id ? (
-              <motion.span className="absolute -bottom-2 left-1/2 h-px w-8 -translate-x-1/2 bg-cyan-200/80" layoutId="felipe-os-active-underline" />
+            {props.activeView === "services" ? <ServicesApp onOpenHeyFelipe={() => props.onViewChange("hey-felipe")} /> : null}
+            {props.activeView === "systems" ? (
+              <SystemsApp activeSystemId={props.activeSystemId} onActiveSystemChange={props.onActiveSystemChange} />
             ) : null}
-          </button>
-        ))}
+            {props.activeView === "case-studies" ? (
+              <ProofApp activeCaseId={props.activeCaseId} onActiveCaseChange={props.onActiveCaseChange} />
+            ) : null}
+            {props.activeView === "experience" ? <ExperienceApp /> : null}
+            {props.activeView === "cv" ? <CVApp publicCV={props.publicCV} /> : null}
+            {props.activeView === "hey-felipe" ? <HeyFelipeApp onIntent={props.onIntent} /> : null}
+            {props.activeView === "contact" ? <ContactApp onOpenHeyFelipe={() => props.onViewChange("hey-felipe")} /> : null}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+function RightWidgetStack({ activeView, onViewChange }: { activeView: FelipeOSView; onViewChange: (view: FelipeOSView) => void }) {
+  const focus = viewMeta[activeView].context;
+
+  return (
+    <aside className="fixed bottom-28 right-6 top-16 z-20 hidden w-[320px] content-start gap-4 overflow-y-auto [scrollbar-width:none] lg:grid [&::-webkit-scrollbar]:hidden">
+      <section className="rounded-[22px] border border-white/10 bg-black/30 p-4 shadow-[0_18px_55px_rgba(0,0,0,0.28)] backdrop-blur-2xl">
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/60">Availability</p>
+          <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.6)]" />
+        </div>
+        <h2 className="mt-3 text-xl font-semibold text-white">Available</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">Product / Growth / AI systems</p>
+        <p className="text-sm text-slate-400">Paris / Remote</p>
+        <button
+          className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+          onClick={() => onViewChange("contact")}
+          type="button"
+        >
+          Contact →
+        </button>
+      </section>
+
+      <section className="rounded-[22px] border border-white/10 bg-black/26 p-4 backdrop-blur-2xl">
+        <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/55">Proof metrics</p>
+        <div className="mt-4 grid gap-2">
+          {proofMetrics.map(([value, label]) => (
+            <div className="rounded-2xl border border-white/[0.075] bg-white/[0.035] p-3" key={value}>
+              <p className="text-lg font-semibold text-white">{value}</p>
+              <p className="text-xs leading-5 text-slate-400">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[22px] border border-white/10 bg-black/26 p-4 backdrop-blur-2xl">
+        <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">Current focus</p>
+        <h2 className="mt-3 text-lg font-semibold text-white">{viewMeta[activeView].title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{focus}</p>
+      </section>
+
+      <section className="rounded-[22px] border border-white/10 bg-black/26 p-4 backdrop-blur-2xl">
+        <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/55">System status</p>
+        <div className="mt-4 grid gap-2">
+          {["APIs", "Automation", "Dashboards", "Growth"].map((item) => (
+            <div className="flex items-center justify-between rounded-2xl border border-white/[0.075] bg-white/[0.035] px-3 py-2" key={item}>
+              <span className="text-sm text-slate-200">{item}</span>
+              <motion.span
+                animate={{ opacity: [0.45, 1, 0.45] }}
+                className="h-2 w-2 rounded-full bg-cyan-300"
+                transition={{ duration: 2.4, repeat: Infinity }}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+    </aside>
+  );
+}
+
+function BottomDock({ activeView, onViewChange }: { activeView: FelipeOSView; onViewChange: (view: FelipeOSView) => void }) {
+  return (
+    <nav aria-label="FelipeOS dock" className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3">
+      <div className="flex max-w-full gap-1.5 overflow-x-auto rounded-[24px] border border-white/12 bg-black/55 p-2 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {dockItems.map((item) => {
+          const active = activeView === item.id;
+          return (
+            <button
+              aria-current={active ? "page" : undefined}
+              className={`group flex h-12 min-w-12 cursor-pointer items-center gap-2 rounded-[18px] border px-3 text-left outline-none transition ${
+                active
+                  ? "border-cyan-300/35 bg-cyan-300/12 text-white shadow-[0_0_28px_rgba(34,211,238,0.14)]"
+                  : "border-white/10 bg-white/[0.045] text-slate-300 hover:-translate-y-1 hover:border-purple-300/35 hover:bg-purple-400/10 focus-visible:border-cyan-200/50"
+              }`}
+              key={item.id}
+              onClick={() => onViewChange(item.id)}
+              type="button"
+            >
+              <span className="grid h-7 w-7 flex-none place-items-center rounded-xl bg-white/[0.08] text-[0.68rem] font-bold text-white">
+                {item.icon}
+              </span>
+              <span className={`${active ? "inline" : "hidden group-hover:inline"} whitespace-nowrap pr-1 text-xs font-semibold max-sm:hidden`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
 }
 
-function StagePane(props: {
-  activeCaseId: CaseStudyId;
-  activeSystemId: SystemId;
-  activeView: FelipeOSView;
-  onActiveCaseChange: (id: CaseStudyId) => void;
-  onActiveSystemChange: (id: SystemId) => void;
-  onChatOpenChange: (open: boolean) => void;
-  onViewChange: (view: FelipeOSView) => void;
-  publicCV: PublicCVData;
-}) {
-  return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 pb-28 [scrollbar-width:none] sm:px-5 lg:px-6 [&::-webkit-scrollbar]:hidden">
-      <AnimatePresence mode="wait">
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          initial={{ opacity: 0, y: 10 }}
-          key={props.activeView}
-          transition={{ duration: 0.28, ease: "easeOut" }}
-        >
-          {props.activeView === "command" ? (
-            <CommandCenterView
-              onOpenCaseStudies={() => props.onViewChange("case-studies")}
-              onOpenSystem={(id) => {
-                props.onActiveSystemChange(id);
-                props.onViewChange("systems");
-              }}
-              onOpenChat={() => props.onChatOpenChange(true)}
-              onShowServices={() => props.onViewChange("services")}
-              onShowProof={() => props.onViewChange("case-studies")}
-            />
-          ) : null}
-          {props.activeView === "services" ? <ServicesView onOpenChat={() => props.onChatOpenChange(true)} /> : null}
-          {props.activeView === "systems" ? (
-            <SystemsView activeSystemId={props.activeSystemId} onActiveSystemChange={props.onActiveSystemChange} />
-          ) : null}
-          {props.activeView === "case-studies" ? (
-            <CaseStudiesView activeCaseId={props.activeCaseId} onActiveCaseChange={props.onActiveCaseChange} />
-          ) : null}
-          {props.activeView === "experience" ? <ExperienceView /> : null}
-          {props.activeView === "cv" ? <CVWorkspaceView publicCV={props.publicCV} /> : null}
-          {props.activeView === "contact" ? <ContactView onOpenChat={() => props.onChatOpenChange(true)} /> : null}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function CommandCenterView({
-  onOpenCaseStudies,
+function CommandCenterApp({
+  onOpenHeyFelipe,
   onOpenSystem,
-  onOpenChat,
-  onShowServices,
-  onShowProof,
+  onViewChange,
 }: {
-  onOpenCaseStudies: () => void;
+  onOpenHeyFelipe: () => void;
   onOpenSystem: (id: SystemId) => void;
-  onOpenChat: () => void;
-  onShowServices: () => void;
-  onShowProof: () => void;
+  onViewChange: (view: FelipeOSView) => void;
 }) {
   return (
-    <div className="grid min-w-0 gap-5 xl:grid-cols-[0.9fr_1.1fr] xl:items-stretch">
-      <div className="min-w-0 rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-7">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Command Center</p>
-          <h2 className="mt-5 max-w-3xl break-words text-[2.05rem] font-semibold leading-[1.05] text-white sm:text-5xl">
-            I build AI-powered systems that turn messy operations into scalable growth engines.
-          </h2>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-            Agentic workflows, AI assistants, automations, API integrations, paid growth systems and dashboards. Systems designed, built and shipped.
-          </p>
-        </div>
-        <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
-          {proofMetrics.map(([value, label, tag]) => (
-            <MetricWidget key={value} label={label} tag={tag} value={value} />
+    <div className="grid gap-5 xl:grid-cols-[0.94fr_1.06fr] xl:items-start">
+      <section className="rounded-[22px] border border-white/10 bg-white/[0.035] p-5 sm:p-7">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Command Center</p>
+        <h2 className="mt-5 text-[2.05rem] font-semibold leading-[1.05] text-white sm:text-5xl">
+          I build AI-powered systems that turn messy operations into scalable growth engines.
+        </h2>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+          Agentic workflows, AI assistants, automations, API integrations, paid growth systems and dashboards — designed, built and shipped.
+        </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {proofMetrics.map(([value, label]) => (
+            <div className="rounded-2xl border border-white/[0.075] bg-black/[0.22] p-3" key={value}>
+              <p className="text-base font-semibold text-white">{value}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">{label}</p>
+            </div>
           ))}
         </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
-          <button className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[0_12px_30px_rgba(255,255,255,0.08)] transition hover:-translate-y-0.5 hover:bg-cyan-100" onClick={onShowServices} type="button">
+          <button className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" onClick={() => onViewChange("services")} type="button">
             Explore services →
           </button>
-          <button className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50 hover:bg-cyan-300/15" onClick={onShowProof} type="button">
+          <button className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50" onClick={() => onViewChange("case-studies")} type="button">
             See proof of work →
           </button>
-          <button className="rounded-full border border-white/10 bg-black/25 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-purple-300/35 hover:bg-purple-400/10" onClick={onOpenChat} type="button">
+          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
             Open Hey Felipe →
           </button>
         </div>
-      </div>
+      </section>
 
-      <div className="grid min-w-0 gap-4">
-        <div className="rounded-[22px] border border-white/10 bg-black/28 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">FelipeOS System Map</p>
-              <h3 className="mt-1 text-xl font-semibold text-white">Pick a system surface.</h3>
-            </div>
-            <span className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100 sm:inline-flex">
-              Adaptive stage
-            </span>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {systemMapModules.map((module, index) => (
-              <motion.button
-                animate={{ opacity: 1, y: 0 }}
-                className="group cursor-pointer rounded-[18px] border border-white/10 bg-white/[0.045] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] outline-none transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/[0.07] hover:shadow-[0_14px_34px_rgba(34,211,238,0.08)] focus-visible:border-cyan-200/50"
-                initial={{ opacity: 0, y: 8 }}
-                key={module.title}
-                onClick={() => (module.systemId ? onOpenSystem(module.systemId) : onOpenCaseStudies())}
-                transition={{ delay: index * 0.04, duration: 0.32 }}
-                type="button"
-              >
-                <span className="mb-3 block h-1.5 w-10 rounded-full bg-[linear-gradient(90deg,#8b5cf6,#22d3ee)] opacity-70 transition group-hover:w-16 group-hover:opacity-100" />
-                <span className="block text-base font-semibold text-white">{module.title}</span>
-                <span className="mt-1 block text-sm leading-6 text-slate-400">{module.description}</span>
-                <span className="mt-3 inline-flex text-xs font-semibold text-cyan-100 opacity-80 transition group-hover:translate-x-0.5 group-hover:opacity-100">
-                  Explore →
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-      </div>
+      <SystemNetworkMap onOpenSystem={onOpenSystem} onViewChange={onViewChange} />
     </div>
   );
 }
 
-function MetricWidget({ label, tag, value }: { label: string; tag: string; value: string }) {
+function SystemNetworkMap({
+  onOpenSystem,
+  onViewChange,
+}: {
+  onOpenSystem: (id: SystemId) => void;
+  onViewChange: (view: FelipeOSView) => void;
+}) {
+  const nodes: Array<{ label: string; detail: string; systemId?: SystemId; view?: FelipeOSView }> = [
+    { label: "AI Assistants", detail: "Answer, draft, classify", systemId: "ai-assistants" },
+    { label: "Agentic Workflows", detail: "Research, decide, route", systemId: "agentic-workflows" },
+    { label: "Automation & APIs", detail: "Connect the stack", systemId: "automation-integrations" },
+    { label: "Growth Systems", detail: "Instrument the funnel", systemId: "growth-systems" },
+    { label: "Product Dashboards", detail: "Decisions, not reports", systemId: "product-dashboards" },
+    { label: "Proof of Work", detail: "Representative builds", view: "case-studies" },
+  ];
+
   return (
-    <div className="min-w-[8.25rem] rounded-[16px] border border-white/[0.075] bg-black/[0.22] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] sm:min-w-0">
-      <p className="text-[0.64rem] uppercase tracking-[0.14em] text-cyan-100/45">{tag}</p>
-      <p className="text-base font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-300">{label}</p>
-    </div>
+    <section className="rounded-[22px] border border-white/10 bg-black/28 p-4 sm:p-5">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">System map</p>
+      <div className="relative mt-5 overflow-hidden rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_50%_45%,rgba(139,92,246,0.2),rgba(255,255,255,0.025)_46%,transparent_74%)] p-4 sm:p-6">
+        <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] [background-size:36px_36px]" />
+        <div className="relative grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <div className="mx-auto grid h-28 w-28 place-items-center rounded-full border border-cyan-300/25 bg-cyan-300/10 text-center shadow-[0_0_42px_rgba(34,211,238,0.14)]">
+              <div>
+                <p className="text-sm font-semibold text-white">FelipeOS</p>
+                <p className="text-[0.68rem] text-cyan-100/70">operating layer</p>
+              </div>
+            </div>
+          </div>
+          {nodes.map((node) => (
+            <button
+              className="group cursor-pointer rounded-[18px] border border-white/10 bg-white/[0.045] p-4 text-left outline-none transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/[0.07] focus-visible:border-cyan-200/50"
+              key={node.label}
+              onClick={() => (node.systemId ? onOpenSystem(node.systemId) : onViewChange(node.view || "command"))}
+              type="button"
+            >
+              <span className="block text-sm font-semibold text-white">{node.label}</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-400">{node.detail}</span>
+              <span className="mt-3 inline-flex text-xs font-semibold text-cyan-100/80 transition group-hover:translate-x-0.5">Open →</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-function ServicesView({ onOpenChat }: { onOpenChat: () => void }) {
+function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
   return (
-    <div className="grid gap-5" id="services">
-      <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-5 sm:p-7">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Services</p>
-        <div className="mt-3 grid gap-4 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
-          <div>
-            <h2 className="text-3xl font-semibold text-white sm:text-4xl">What I build for clients.</h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-              Focused product, growth and AI systems work: from messy process to operating system, with practical deliverables and clear commercial value.
-            </p>
-          </div>
-          <div className="grid gap-2 rounded-[18px] border border-emerald-300/15 bg-emerald-300/[0.065] p-4 text-sm leading-6 text-emerald-50">
-            <p className="font-semibold">Have a workflow, growth problem or AI use case worth turning into a system?</p>
-            <div className="flex flex-wrap gap-2">
-              <a className="rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}`}>
-                Email me →
-              </a>
-              <a className="rounded-full border border-white/15 bg-black/20 px-3.5 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-cyan-300/35" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
-                Connect on LinkedIn →
-              </a>
-              <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-3.5 py-2 text-xs font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenChat} type="button">
-                Start with Hey Felipe →
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="grid gap-5">
+      <section className="rounded-[22px] border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Commercial apps</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">What clients can buy.</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+          Practical, scoped builds for teams that want AI embedded in real operations, growth infrastructure, dashboards, and product delivery.
+        </p>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {services.map((service, index) => (
-          <motion.article
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-[20px] border border-white/10 bg-black/28 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]"
-            initial={{ opacity: 0, y: 10 }}
-            key={service.title}
-            transition={{ delay: index * 0.06, duration: 0.32 }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">Offer {index + 1}</p>
-                <h3 className="mt-2 text-2xl font-semibold text-white">{service.title}</h3>
-              </div>
-              <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">
-                Build
-              </span>
+          <article className="rounded-[20px] border border-white/10 bg-black/28 p-5" key={service.title}>
+            <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">Service {index + 1}</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">{service.title}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-300">{service.description}</p>
+            <p className="mt-4 text-xs uppercase tracking-[0.15em] text-cyan-100/50">Deliverables</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {service.deliverables.map((deliverable) => (
+                <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={deliverable}>
+                  {deliverable}
+                </span>
+              ))}
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-300">{service.description}</p>
-            <div className="mt-5 rounded-2xl border border-white/[0.075] bg-white/[0.035] p-4">
-              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-cyan-100/50">Best for</p>
-              <p className="mt-2 text-sm leading-6 text-slate-200">{service.bestFor}</p>
-            </div>
-            <div className="mt-4">
-              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-cyan-100/50">Deliverables</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {service.deliverables.map((deliverable) => (
-                  <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={deliverable}>
-                    {deliverable}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <a className="mt-6 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}?subject=${encodeURIComponent(service.cta)}`}>
+            <a className="mt-5 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}?subject=${encodeURIComponent(service.cta)}`}>
               {service.cta} →
             </a>
-          </motion.article>
+          </article>
         ))}
       </div>
+
+      <section className="rounded-[22px] border border-emerald-300/15 bg-emerald-300/[0.06] p-5">
+        <h3 className="text-xl font-semibold text-white">Have a messy workflow, growth problem or AI use case worth turning into a system?</h3>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}`}>
+            Email me →
+          </a>
+          <a className="rounded-full border border-white/15 bg-black/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-cyan-300/35" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
+            Connect on LinkedIn →
+          </a>
+          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
+            Open Hey Felipe →
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
 
-function SystemsView({
+function SystemsApp({
   activeSystemId,
   onActiveSystemChange,
 }: {
   activeSystemId: SystemId;
   onActiveSystemChange: (id: SystemId) => void;
 }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   const active = systems.find((system) => system.id === activeSystemId) ?? systems[0];
 
+  function selectSystem(id: SystemId) {
+    onActiveSystemChange(id);
+    setSheetOpen(true);
+  }
+
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.78fr_1.22fr]">
-      <div>
+    <div className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
+      <section>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Systems</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Systems I build.</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-400">Each module changes the active workspace preview.</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Interactive build surfaces.</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-400">Select a module to preview the operating layer and commercial value.</p>
         <div className="mt-5 grid gap-3">
           {systems.map((system) => (
             <button
               aria-pressed={active.id === system.id}
               className={`cursor-pointer rounded-[18px] border p-4 text-left outline-none transition ${
                 active.id === system.id
-                  ? "border-cyan-300/35 bg-[linear-gradient(135deg,rgba(139,92,246,0.16),rgba(34,211,238,0.08))] shadow-[0_0_34px_rgba(34,211,238,0.1)]"
-                  : "border-white/10 bg-white/[0.035] hover:-translate-y-0.5 hover:border-cyan-300/25 hover:bg-cyan-300/[0.055] hover:shadow-[0_14px_34px_rgba(34,211,238,0.08)] focus-visible:border-cyan-200/40"
+                  ? "border-cyan-300/35 bg-cyan-300/10 text-white"
+                  : "border-white/10 bg-white/[0.035] text-slate-300 hover:-translate-y-0.5 hover:border-cyan-300/25 hover:bg-cyan-300/[0.055] focus-visible:border-cyan-200/40"
               }`}
               key={system.id}
-              onClick={() => onActiveSystemChange(system.id)}
+              onClick={() => selectSystem(system.id)}
               type="button"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-base font-semibold text-white">{system.title}</h3>
                 <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[0.68rem] text-slate-300">{system.signal}</span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{system.description}</p>
-              <span className="mt-3 inline-flex text-xs font-semibold text-cyan-100/80">Explore module →</span>
+              <p className="mt-2 text-sm leading-6">{system.description}</p>
+              <span className="mt-3 inline-flex text-xs font-semibold text-cyan-100/80">Open preview →</span>
             </button>
           ))}
         </div>
+      </section>
+
+      <div className="hidden xl:grid xl:content-start xl:gap-4">
+        <SystemPreview system={active} />
       </div>
 
-      <div className="grid gap-4">
-        <StagePreview mockup={active.mockup} />
-        <div className="rounded-[20px] border border-white/10 bg-black/28 p-4">
-          <div className="flex flex-wrap gap-2">
-            {active.examples.map((example) => (
-              <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={example}>
-                {example}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
+      <AnimatePresence>
+        {sheetOpen ? (
+          <motion.div
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 bg-black/55 p-3 pt-24 backdrop-blur-sm xl:hidden"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+          >
+            <motion.div
+              animate={{ y: 0 }}
+              className="max-h-[78vh] overflow-y-auto rounded-[24px] border border-white/12 bg-[#090914] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.5)]"
+              exit={{ y: 40 }}
+              initial={{ y: 40 }}
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-lg font-semibold text-white">{active.title}</h3>
+                <button className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-xs text-slate-200" onClick={() => setSheetOpen(false)} type="button">
+                  Close
+                </button>
+              </div>
+              <SystemPreview system={active} />
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
 
-function CaseStudiesView({
-  activeCaseId,
-  onActiveCaseChange,
-}: {
-  activeCaseId: CaseStudyId;
-  onActiveCaseChange: (id: CaseStudyId) => void;
-}) {
+function SystemPreview({ system }: { system: (typeof systems)[number] }) {
+  return (
+    <div className="grid gap-4">
+      <StagePreview mockup={system.mockup} />
+      <section className="rounded-[20px] border border-white/10 bg-black/28 p-4">
+        <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">What it is</p>
+        <p className="mt-2 text-sm leading-6 text-slate-200">{system.description}</p>
+        <p className="mt-4 text-xs uppercase tracking-[0.16em] text-cyan-100/55">Example use cases</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {system.examples.map((example) => (
+            <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={example}>
+              {example}
+            </span>
+          ))}
+        </div>
+        <p className="mt-4 text-xs uppercase tracking-[0.16em] text-cyan-100/55">Tools / integrations</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {system.tools.map((tool) => (
+            <span className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1.5 text-xs text-purple-100" key={tool}>
+              {tool}
+            </span>
+          ))}
+        </div>
+        <div className="mt-4 rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.06] p-3">
+          <p className="text-xs uppercase tracking-[0.16em] text-emerald-100/60">Commercial value</p>
+          <p className="mt-2 text-sm leading-6 text-emerald-50">{system.commercialValue}</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ProofApp({ activeCaseId, onActiveCaseChange }: { activeCaseId: CaseStudyId; onActiveCaseChange: (id: CaseStudyId) => void }) {
   const active = caseStudies.find((study) => study.id === activeCaseId) ?? caseStudies[0];
 
   return (
-    <div className="grid gap-5" id="proof-of-work">
-      <div className="flex flex-col gap-4 rounded-[22px] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
-        <div className="max-w-3xl">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Proof of Work</p>
-          <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Representative systems with commercial value.</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-400">Stylized mockups and generic data show the system patterns without exposing client-sensitive information.</p>
-        </div>
-        <div className="flex gap-2 overflow-x-auto rounded-[18px] border border-white/10 bg-black/25 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {caseStudies.map((study) => (
-            <button
-              aria-pressed={active.id === study.id}
-              className={`flex-none rounded-[14px] px-3 py-2 text-left text-xs font-medium outline-none transition sm:px-4 ${
-                active.id === study.id
-                  ? "bg-[linear-gradient(135deg,rgba(139,92,246,0.32),rgba(34,211,238,0.16))] text-white shadow-[0_0_22px_rgba(139,92,246,0.18)]"
-                  : "text-slate-400 hover:bg-white/[0.055] hover:text-slate-100 focus-visible:bg-white/[0.07]"
-              }`}
-              key={study.id}
-              onClick={() => onActiveCaseChange(study.id)}
-              type="button"
-            >
-              {study.title} <span className="ml-1 text-cyan-100/55">→</span>
-            </button>
-          ))}
-        </div>
+    <div className="grid gap-5">
+      <section>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Proof of Work</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Safe representative systems.</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">Stylized product mockups and generic labels only. No sensitive client screenshots or data.</p>
+      </section>
+
+      <div className="flex gap-2 overflow-x-auto rounded-[18px] border border-white/10 bg-black/25 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {caseStudies.map((study) => (
+          <button
+            aria-pressed={active.id === study.id}
+            className={`flex-none cursor-pointer rounded-[14px] px-3 py-2 text-left text-xs font-medium outline-none transition sm:px-4 ${
+              active.id === study.id ? "bg-cyan-300/12 text-white" : "text-slate-400 hover:bg-white/[0.055] hover:text-slate-100"
+            }`}
+            key={study.id}
+            onClick={() => onActiveCaseChange(study.id)}
+            type="button"
+          >
+            {study.title} →
+          </button>
+        ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
         <StagePreview mockup={active.mockup} />
         <article className="rounded-[20px] border border-white/10 bg-black/30 p-4">
-          <div className="grid gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">{active.category}</p>
-              <h3 className="mt-1 text-2xl font-semibold text-white">{active.title}</h3>
-              <p className="mt-2 text-sm font-medium text-cyan-100">{active.subtitle}</p>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">{active.copy}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {active.proof.map((item) => (
-                <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs text-emerald-100" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
+          <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">{active.category}</p>
+          <h3 className="mt-2 text-2xl font-semibold text-white">{active.title}</h3>
+          <p className="mt-2 text-sm font-medium text-cyan-100">{active.subtitle}</p>
           <div className="mt-5 grid gap-3">
             {[
               ["Problem", active.problem],
-              ["System designed/built", active.system],
+              ["System built", active.system],
               ["Commercial value", active.commercialValue],
             ].map(([label, copy]) => (
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3" key={label}>
@@ -632,15 +800,13 @@ function CaseStudiesView({
               </div>
             ))}
           </div>
-          <div className="mt-5">
-            <p className="text-[0.68rem] uppercase tracking-[0.15em] text-cyan-100/50">Capabilities demonstrated</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {active.capabilities.map((capability) => (
-                <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={capability}>
-                  {capability}
-                </span>
-              ))}
-            </div>
+          <p className="mt-5 text-[0.68rem] uppercase tracking-[0.15em] text-cyan-100/50">Capabilities</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {active.capabilities.map((capability) => (
+              <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={capability}>
+                {capability}
+              </span>
+            ))}
           </div>
         </article>
       </div>
@@ -648,21 +814,20 @@ function CaseStudiesView({
   );
 }
 
-function ExperienceView() {
+function ExperienceApp() {
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Experience</p>
       <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Operator timeline for product, growth and automation.</h2>
-      <div className="mt-8 grid gap-4 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
         {experienceEntries.map((entry, index) => (
           <motion.article
             animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-[20px] border border-white/10 bg-white/[0.045] p-4"
+            className="rounded-[20px] border border-white/10 bg-white/[0.045] p-4"
             initial={{ opacity: 0, y: 12 }}
             key={entry.company}
-            transition={{ delay: index * 0.08, duration: 0.36 }}
+            transition={{ delay: index * 0.06, duration: 0.32 }}
           >
-            <div className="absolute -left-2 top-5 hidden h-px w-4 bg-[linear-gradient(90deg,#8b5cf6,#22d3ee)] lg:block" />
             <span className="mb-4 block h-2 w-16 rounded-full bg-[linear-gradient(90deg,#8b5cf6,#22d3ee)]" />
             <h3 className="text-lg font-semibold text-white">{entry.company}</h3>
             <p className="mt-1 text-sm text-cyan-100/70">{entry.role}</p>
@@ -681,67 +846,94 @@ function ExperienceView() {
   );
 }
 
-function CVWorkspaceView({ publicCV }: { publicCV: PublicCVData }) {
-  return (
-    <div className="grid gap-5" id="cv">
-      <div className="rounded-[22px] border border-white/10 bg-white/[0.045] p-5 sm:p-7">
-        <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Public CV</p>
-            <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">{publicCV.title}</h2>
-            <div className="mt-4 space-y-3 text-base leading-7 text-slate-300">
-              {publicCV.summary.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href="/cv/felipe-mejia-public-cv.pdf">
-                Download CV →
-              </a>
-              <Link className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50 hover:bg-cyan-300/15" href="/cv">
-                Open CV page →
-              </Link>
-            </div>
-          </div>
+function CVApp({ publicCV }: { publicCV: PublicCVData }) {
+  const [activeRoleIndex, setActiveRoleIndex] = useState(0);
+  const activeRole = publicCV.experience[activeRoleIndex] ?? publicCV.experience[0];
 
-          <div className="rounded-[20px] border border-white/10 bg-black/28 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Selected achievements</p>
-            <div className="mt-4 grid gap-3">
-              {(publicCV.selectedAchievements || []).map((achievement) => (
-                <p className="rounded-2xl border border-white/[0.075] bg-white/[0.035] p-3 text-sm leading-6 text-slate-200" key={achievement}>
-                  {achievement}
-                </p>
+  return (
+    <div className="grid gap-5">
+      <section className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
+        <div className="rounded-[22px] border border-white/10 bg-white/[0.035] p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Public CV</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">{publicCV.title}</h2>
+          <div className="mt-4 space-y-3 text-sm leading-6 text-slate-300">
+            {publicCV.summary.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          <a className="mt-6 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href="/cv/felipe-mejia-public-cv.pdf">
+            Download CV →
+          </a>
+        </div>
+
+        <div className="grid gap-3">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Interactive timeline</p>
+          <div className="grid gap-3 md:grid-cols-[0.82fr_1.18fr]">
+            <div className="grid gap-2">
+              {publicCV.experience.map((role, index) => (
+                <button
+                  aria-pressed={activeRoleIndex === index}
+                  className={`cursor-pointer rounded-2xl border p-3 text-left outline-none transition ${
+                    activeRoleIndex === index
+                      ? "border-cyan-300/35 bg-cyan-300/10"
+                      : "border-white/10 bg-white/[0.035] hover:-translate-y-0.5 hover:border-cyan-300/25"
+                  }`}
+                  key={`${role.company}-${role.role}`}
+                  onClick={() => setActiveRoleIndex(index)}
+                  type="button"
+                >
+                  <p className="text-sm font-semibold text-white">{role.company}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">{role.role}</p>
+                </button>
               ))}
             </div>
+            <article className="rounded-[20px] border border-white/10 bg-black/28 p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/55">{activeRole.company}</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">{activeRole.role}</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeRole.metrics.map((metric) => (
+                  <span className="rounded-full border border-white/10 bg-white/[0.055] px-2.5 py-1 text-[0.68rem] text-slate-200" key={metric}>
+                    {metric}
+                  </span>
+                ))}
+              </div>
+              <ul className="mt-4 space-y-2">
+                {activeRole.bullets.map((bullet) => (
+                  <li className="border-l border-cyan-300/35 pl-3 text-sm leading-6 text-slate-300" key={bullet}>
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </article>
           </div>
         </div>
-      </div>
-
-      <section className="grid gap-4 lg:grid-cols-2" aria-label="Public CV experience">
-        {publicCV.experience.map((item) => (
-          <article className="rounded-[20px] border border-white/10 bg-black/28 p-5" key={`${item.company}-${item.role}`}>
-            <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/55">{item.company}</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">{item.role}</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {item.metrics.map((metric) => (
-                <span className="rounded-full border border-white/10 bg-white/[0.055] px-2.5 py-1 text-[0.68rem] text-slate-200" key={metric}>
-                  {metric}
-                </span>
-              ))}
-            </div>
-            <ul className="mt-4 space-y-2">
-              {item.bullets.map((bullet) => (
-                <li className="border-l border-cyan-300/35 pl-3 text-sm leading-6 text-slate-300" key={bullet}>
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_0.78fr]" aria-label="Public CV skills tools and languages">
-        <div className="rounded-[20px] border border-white/10 bg-black/28 p-5">
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-[20px] border border-white/10 bg-black/28 p-4 lg:col-span-2">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Achievements</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {(publicCV.selectedAchievements || []).map((achievement) => (
+              <p className="rounded-2xl border border-white/[0.075] bg-white/[0.035] p-3 text-sm leading-6 text-slate-200" key={achievement}>
+                {achievement}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-[20px] border border-white/10 bg-black/28 p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Languages</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(publicCV.languages || []).map((language) => (
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs text-emerald-100" key={language}>
+                {language}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+        <div className="rounded-[20px] border border-white/10 bg-black/28 p-4">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Skills</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {Object.entries(publicCV.skills).map(([group, items]) => (
@@ -752,26 +944,14 @@ function CVWorkspaceView({ publicCV }: { publicCV: PublicCVData }) {
             ))}
           </div>
         </div>
-        <div className="grid gap-4">
-          <div className="rounded-[20px] border border-white/10 bg-black/28 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Tools</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(publicCV.tools || []).map((tool) => (
-                <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={tool}>
-                  {tool}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[20px] border border-white/10 bg-black/28 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Languages</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(publicCV.languages || []).map((language) => (
-                <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs text-emerald-100" key={language}>
-                  {language}
-                </span>
-              ))}
-            </div>
+        <div className="rounded-[20px] border border-white/10 bg-black/28 p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">Tools</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(publicCV.tools || []).map((tool) => (
+              <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-slate-200" key={tool}>
+                {tool}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -779,10 +959,81 @@ function CVWorkspaceView({ publicCV }: { publicCV: PublicCVData }) {
   );
 }
 
-function ContactView({ onOpenChat }: { onOpenChat: () => void }) {
+function HeyFelipeApp({ onIntent }: { onIntent: (intent: RouteIntent) => void }) {
+  const [messages, setMessages] = useState<Array<{ role: "user" | "felipe"; text: string }>>([
+    {
+      role: "felipe",
+      text: "Ask what I can build for your team, or open one of the FelipeOS apps.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const suggestions = useMemo(
+    () => ["Show services", "Show proof of work", "Show systems", "Open CV", "Contact Felipe"],
+    [],
+  );
+
+  function submit(text: string) {
+    const value = text.trim();
+    if (!value) return;
+    const intent = routeMessage(value);
+    setMessages((current) => [...current, { role: "user", text: value }, { role: "felipe", text: intent.response }]);
+    setInput("");
+    onIntent(intent);
+  }
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-      <div className="rounded-[22px] border border-white/10 bg-white/[0.045] p-5 sm:p-7">
+    <div className="mx-auto grid max-w-3xl gap-4">
+      <section className="rounded-[22px] border border-white/10 bg-black/30 p-4">
+        <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/55">Command app</p>
+        <h2 className="mt-2 text-3xl font-semibold text-white">Hey Felipe</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-300">Fast routing for services, proof, systems, CV and contact. Cmd/Ctrl + K opens this app.</p>
+      </section>
+
+      <div className="max-h-72 overflow-y-auto rounded-[22px] border border-white/10 bg-white/[0.035] p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="grid gap-3">
+          {messages.slice(-8).map((message, index) => (
+            <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={`${message.role}-${index}-${message.text}`}>
+              <p className={`max-w-[86%] rounded-2xl border px-3 py-2.5 text-sm leading-6 ${message.role === "user" ? "border-cyan-300/20 bg-cyan-300/10 text-white" : "border-white/10 bg-black/28 text-slate-100"}`}>
+                {message.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((action) => (
+          <button className="cursor-pointer rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1.5 text-xs text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10" key={action} onClick={() => submit(action)} type="button">
+            {action}
+          </button>
+        ))}
+      </div>
+
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit(input);
+        }}
+      >
+        <input
+          className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/35"
+          onChange={(event) => setInput(event.target.value)}
+          placeholder="Ask what I can build for your team..."
+          value={input}
+        />
+        <button className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100" type="submit">
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ContactApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
+  return (
+    <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="rounded-[22px] border border-white/10 bg-white/[0.045] p-5 sm:p-7">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Contact</p>
         <h2 className="mt-4 text-3xl font-semibold text-white sm:text-5xl">Have a messy workflow, growth problem or AI use case worth turning into a system?</h2>
         <p className="mt-5 text-base leading-7 text-slate-300">
@@ -792,183 +1043,28 @@ function ContactView({ onOpenChat }: { onOpenChat: () => void }) {
           <a className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}`}>
             Email me →
           </a>
-          <a className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50 hover:bg-cyan-300/15" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
+          <a className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
             Connect on LinkedIn →
           </a>
-          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenChat} type="button">
-            Start with Hey Felipe →
+          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
+            Open Hey Felipe →
           </button>
         </div>
-      </div>
-      <div className="grid content-start gap-3 rounded-[22px] border border-white/10 bg-black/30 p-5 sm:p-7">
-        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:border-cyan-300/30 hover:bg-cyan-300/10" href={`mailto:${EMAIL}`}>
-          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">Email me</span>
+      </section>
+      <section className="grid content-start gap-3 rounded-[22px] border border-white/10 bg-black/30 p-5 sm:p-7">
+        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10" href={`mailto:${EMAIL}`}>
+          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">Email</span>
           <span className="mt-1 block text-lg font-semibold">{EMAIL} →</span>
         </a>
-        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:border-purple-300/30 hover:bg-purple-400/10" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
-          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">Connect on LinkedIn</span>
+        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-purple-300/30 hover:bg-purple-400/10" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
+          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">LinkedIn</span>
           <span className="mt-1 block text-lg font-semibold">felipemejiaosorio →</span>
         </a>
-        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:border-cyan-300/30 hover:bg-cyan-300/10" href={GITHUB} rel="noopener noreferrer" target="_blank">
-          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">See GitHub</span>
+        <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10" href={GITHUB} rel="noopener noreferrer" target="_blank">
+          <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">GitHub</span>
           <span className="mt-1 block text-lg font-semibold">github.com/afmo91 →</span>
         </a>
-      </div>
+      </section>
     </div>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 16 16">
-      <path d="M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
-    </svg>
-  );
-}
-
-function HeyFelipeDock({
-  chatOpen,
-  onChatOpenChange,
-  onIntent,
-}: {
-  chatOpen: boolean;
-  onChatOpenChange: (open: boolean) => void;
-  onIntent: (intent: RouteIntent) => void;
-}) {
-  const [messages, setMessages] = useState<Array<{ role: "user" | "felipe"; text: string }>>([
-    {
-      role: "felipe",
-      text: "Hi, I'm Felipe. I build AI-powered systems for product, growth and operations. What would you like to explore?",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const suggestions = quickPrompts.slice(0, 4).map((route) => route.prompt);
-
-  function submit(text: string) {
-    const value = text.trim();
-    if (!value) return;
-    const intent = routeMessage(value);
-    onIntent(intent);
-    onChatOpenChange(true);
-    setMessages((current) => [...current, { role: "user", text: value }, { role: "felipe", text: intent.response }]);
-    setInput("");
-  }
-
-  return (
-    <div className="absolute inset-x-3 bottom-3 z-30 sm:inset-x-5 sm:bottom-5">
-      <AnimatePresence mode="wait">
-        {chatOpen ? (
-          <ChatPanel
-            key="hey-felipe-panel"
-            input={input}
-            messages={messages}
-            suggestions={suggestions}
-            onClose={() => onChatOpenChange(false)}
-            onInputChange={setInput}
-            onSubmit={submit}
-          />
-        ) : (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-[22px] border border-white/10 bg-black/60 p-2 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
-            exit={{ opacity: 0, y: 12 }}
-            initial={{ opacity: 0, y: 12 }}
-            key="hey-felipe-dock"
-            transition={{ damping: 26, stiffness: 260, type: "spring" }}
-          >
-            <button
-              className="flex w-full min-w-0 items-center gap-3 rounded-[16px] border border-white/10 bg-white/[0.055] px-4 py-3 text-left outline-none transition hover:border-purple-300/30 hover:bg-purple-400/[0.07] focus-visible:border-cyan-200/45"
-              onClick={() => onChatOpenChange(true)}
-              type="button"
-            >
-              <span className="grid h-9 w-9 flex-none place-items-center rounded-2xl bg-[linear-gradient(135deg,#8b5cf6,#22d3ee)] text-sm font-bold text-white shadow-[0_0_24px_rgba(139,92,246,0.28)]">HF</span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-white">Hey Felipe — ask what I can build for your team…</span>
-                <span className="hidden truncate text-xs text-slate-400 sm:block">Command palette for systems, proof, CV and contact.</span>
-              </span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function ChatPanel({
-  input,
-  messages,
-  suggestions,
-  onClose,
-  onInputChange,
-  onSubmit,
-}: {
-  input: string;
-  messages: Array<{ role: "user" | "felipe"; text: string }>;
-  suggestions: string[];
-  onClose: () => void;
-  onInputChange: (value: string) => void;
-  onSubmit: (value: string) => void;
-}) {
-  return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="ml-auto max-h-[min(70vh,36rem)] w-full max-w-3xl overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,10,18,0.99),rgba(8,15,24,0.985))] shadow-[0_22px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
-      exit={{ opacity: 0, y: 12 }}
-      initial={{ opacity: 0, y: 12 }}
-      transition={{ damping: 26, stiffness: 260, type: "spring" }}
-    >
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold text-white">Hey Felipe</p>
-          <p className="text-xs text-slate-400">Dockable assistant / command palette</p>
-        </div>
-        <button aria-label="Close Hey Felipe" className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:border-cyan-300/30 hover:text-white" onClick={onClose} type="button">
-          <CloseIcon />
-        </button>
-      </div>
-      <div className="max-h-64 overflow-y-auto px-4 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="grid gap-3">
-          {messages.slice(-6).map((message, index) => (
-            <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`} key={`${message.role}-${index}-${message.text}`}>
-              <p
-                className={`max-w-[86%] rounded-2xl border px-3 py-2.5 text-sm leading-6 ${
-                  message.role === "user"
-                    ? "border-cyan-300/20 bg-cyan-300/10 text-white"
-                    : "border-white/10 bg-white/[0.055] text-slate-100"
-                }`}
-              >
-                {message.text}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="border-t border-white/10 px-4 py-3">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {suggestions.map((action) => (
-            <button className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1.5 text-xs text-purple-100 transition hover:border-cyan-300/30 hover:bg-cyan-300/10" key={action} onClick={() => onSubmit(action)} type="button">
-              {action}
-            </button>
-          ))}
-        </div>
-        <form
-          className="flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(input);
-          }}
-        >
-          <input
-            className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-300/35"
-            onChange={(event) => onInputChange(event.target.value)}
-            placeholder="Ask what I can build for your team..."
-            value={input}
-          />
-          <button className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100" type="submit">
-            Send
-          </button>
-        </form>
-      </div>
-    </motion.div>
   );
 }
