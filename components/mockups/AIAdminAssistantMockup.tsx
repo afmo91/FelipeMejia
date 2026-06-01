@@ -8,7 +8,7 @@ const checklist = ["Identity proof", "Address record", "Income statement", "Sign
 const context = [
   ["Profile", "French resident"],
   ["Need", "Housing file"],
-  ["Language", "English -> French"],
+  ["Language", "English → French"],
   ["Deadline", "Friday"],
 ];
 

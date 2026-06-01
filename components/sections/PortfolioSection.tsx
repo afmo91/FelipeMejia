@@ -16,8 +16,8 @@ const projects = [
   {
     description:
       "Migrated a legacy flow to digital-first onboarding and aligned engineering, data, and commercial teams across Spain.",
-    impact: "Reduced activation time from 5 days to same-day and improved retention through onboarding redesign.",
-    metrics: ["5 days -> same-day", "Spain rollout", "Retention lift"],
+    impact: "Reduced activation time from 5 days → same-day and improved retention through onboarding redesign.",
+    metrics: ["5 days → same-day", "Spain rollout", "Retention lift"],
     slug: "adamo-digital-onboarding",
     stack: "Salesforce, lifecycle analytics, onboarding, stakeholder cadence",
     title: "Adamo Telecom — Digital Onboarding Transformation",

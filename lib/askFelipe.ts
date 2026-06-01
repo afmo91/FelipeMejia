@@ -17,7 +17,7 @@ const knowledge = [
   "Felipe Mejia is a Product & Growth leader with 12+ years across telecom, e-commerce, and B2B SaaS.",
   "He builds AI-enabled workflows, analytics dashboards, onboarding systems, pricing experiments, and product-led growth loops.",
   "Spotz.pro: built an AI-powered multi-channel advertising operating layer across Google, Meta, LinkedIn, TikTok, X, and Pinterest.",
-  "Adamo Telecom: reduced activation from 5 days to same-day, reduced churn by about 15%, improved conversion by 25%, reduced CAC by 30%, recovered €200K+ with attribution, and owned €3M+ annual budget.",
+  "Adamo Telecom: reduced activation from 5 days → same-day, reduced churn by about 15%, improved conversion by 25%, reduced CAC by 30%, recovered €200K+ with attribution, and owned €3M+ annual budget.",
   "Preferred engagement shape: diagnose the system, identify missing signals, scope the smallest useful MVP, ship instrumentation, run experiments, and create a decision cadence.",
 ].join("\n");
 

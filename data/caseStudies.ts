@@ -28,7 +28,7 @@ export const caseStudies: CaseStudy[] = [
     category: "AI SaaS / Paid Media / Product",
     copy: "Built an AI-powered operating layer for paid media teams to monitor, optimize and act across channels.",
     mockup: "spotz",
-    proof: ["0->1 product build", "Cross-channel workflows", "AI recommendations + analytics"],
+    proof: ["0→1 product build", "Cross-channel workflows", "AI recommendations + analytics"],
     problem: "Fragmented channel data and slow campaign decisions.",
     system: "A multi-channel dashboard with recommendation logic, monitoring widgets and workflow surfaces.",
     outcome: "A cohesive operating layer for paid media teams to see, decide and act faster.",

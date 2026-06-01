@@ -25,7 +25,7 @@ const items: JourneyItem[] = [
     id: "what-i-do",
     kicker: "Product · Growth · AI Systems",
     label: "What I Do",
-    metrics: ["12+ years", "0->1", "AI workflows", "Analytics"],
+    metrics: ["12+ years", "0→1", "AI workflows", "Analytics"],
     note: "Start with the messy system, then find the first signal worth shipping around.",
     scan: "Signal lock",
     side: "left",
@@ -55,7 +55,7 @@ const items: JourneyItem[] = [
     id: "results",
     kicker: "Commercial proof",
     label: "Results",
-    metrics: ["5 days -> same-day", "+25% conversion", "-30% CAC", "€200K+ recovered"],
+    metrics: ["5 days → same-day", "+25% conversion", "-30% CAC", "€200K+ recovered"],
     note: "The point of instrumentation is not prettier charts. It is faster decisions and visible lift.",
     scan: "Metric pulse",
     side: "right",
@@ -73,7 +73,7 @@ const items: JourneyItem[] = [
   },
   {
     id: "case-studies",
-    kicker: "Problem -> Move -> Result",
+    kicker: "Problem → Move → Result",
     label: "Case Studies",
     metrics: ["AI ads", "Digital onboarding", "Attribution", "Experimentation"],
     note: "Every useful case study should answer the same question: what changed because of the work?",
@@ -109,7 +109,7 @@ const services = [
 ];
 
 const results = [
-  ["5 days -> same-day", "Activation time reduced through digital onboarding"],
+  ["5 days → same-day", "Activation time reduced through digital onboarding"],
   ["+25%", "Conversion lift from experimentation cadence"],
   ["-30%", "CAC reduction through sharper funnel execution"],
   ["€200K+", "Recovered by attribution and spend reallocation"],
@@ -133,7 +133,7 @@ const experience = [
 
 const cases = [
   ["AI Ads Operating Layer", "Fragmented campaign workflows", "Unified workflow + analytics dashboard", "Cross-channel observability"],
-  ["Digital Onboarding", "Legacy activation delay", "Digital-first onboarding redesign", "5 days -> same-day"],
+  ["Digital Onboarding", "Legacy activation delay", "Digital-first onboarding redesign", "5 days → same-day"],
   ["Attribution Model", "Wasted performance spend", "Budget governance dashboards", "€200K+ recovered"],
   ["Experimentation Engine", "Slow funnel learning", "Weekly hypothesis cadence", "+25% conversion, -30% CAC"],
 ];

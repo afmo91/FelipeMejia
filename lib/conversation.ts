@@ -320,7 +320,7 @@ Rules:
 
 Context about Felipe:
 - Built Spotz.pro: AI multi-channel advertising platform across Google, Meta, LinkedIn, TikTok, X and Pinterest
-- Growth Product Manager at Adamo Telecom 2019-2025: digitised onboarding from 5 days to same-day, built attribution, owned €3M+ annual performance budget
+- Growth Product Manager at Adamo Telecom 2019-2025: digitised onboarding from 5 days → same-day, built attribution, owned €3M+ annual performance budget
 - Key results: +25% conversion, -30% CAC, €200K+ recovered, same-day activation
 - Specialises in: AI workflow design, growth systems, analytics instrumentation, product-led growth
 - Contact: felipe.mejia@spotz.pro, LinkedIn https://www.linkedin.com/in/felipemejiaosorio/, GitHub https://github.com/afmo91

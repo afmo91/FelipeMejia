@@ -37,7 +37,7 @@
       "metrics": ["same-day activation", "~15% churn reduction", "+25% conversion", "-30% CAC", "€200K+ recovered", "€3M+ budget"],
       "bullets": [
         "Unified customer data across Salesforce and marketing stack for full-funnel visibility.",
-        "Migrated legacy onboarding to digital-first; aligned engineering/data/commercial teams across Spain; reduced activation from 5 days to same-day.",
+        "Migrated legacy onboarding to digital-first; aligned engineering/data/commercial teams across Spain; reduced activation from 5 days → same-day.",
         "Redesigned onboarding to reduce churn by ~15%.",
         "Introduced attribution modeling and recovered €200K+ in wasted spend; dashboards used in weekly C-level decisions.",
         "Built experimentation cadence (+25% conversion, -30% CAC); owned €3M+ annual budget across Google Ads, Meta Ads, programmatic."

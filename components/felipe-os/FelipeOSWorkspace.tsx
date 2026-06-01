@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { caseStudies, type CaseStudyId } from "@/data/caseStudies";
 import { experienceEntries } from "@/data/experience";
 import { quickPrompts, type FelipeOSView } from "@/data/chatFlows";
@@ -26,8 +26,46 @@ const proofMetrics = [
   ["+25%", "conversion", "Experimentation"],
   ["-30%", "CAC", "Acquisition"],
   ["€200K+", "recovered", "Attribution"],
-  ["5 days -> same-day", "activation", "Onboarding"],
-  ["€3M+", "annual media budget", "Scale"],
+  ["5 days → same-day", "activation", "Onboarding"],
+  ["€3M+", "annual media budget managed", "Scale"],
+];
+
+const systemMapModules: Array<{
+  title: string;
+  description: string;
+  systemId?: SystemId;
+  view?: FelipeOSView;
+}> = [
+  {
+    title: "AI Assistants",
+    description: "Search, draft, classify and guide work.",
+    systemId: "ai-assistants",
+  },
+  {
+    title: "Agentic Workflows",
+    description: "Research, decide, route and update systems.",
+    systemId: "agentic-workflows",
+  },
+  {
+    title: "Automation & APIs",
+    description: "Connect tools so work moves without copy-paste.",
+    systemId: "automation-integrations",
+  },
+  {
+    title: "Growth Systems",
+    description: "Funnels, attribution and experiments with proof.",
+    systemId: "growth-systems",
+  },
+  {
+    title: "Product Dashboards",
+    description: "Operating views for products, teams and clients.",
+    systemId: "product-builds",
+  },
+  {
+    title: "Case Studies",
+    description: "Representative builds and commercial outcomes.",
+    view: "case-studies",
+  },
 ];
 
 type RouteIntent = {
@@ -150,7 +188,7 @@ function FelipeOSFrame(props: {
   onViewChange: (view: FelipeOSView) => void;
 }) {
   return (
-    <section className="relative z-10 mx-auto flex min-h-[calc(100vh-1.5rem)] w-full max-w-[1480px] flex-col overflow-hidden rounded-[24px] border border-white/12 bg-[linear-gradient(145deg,rgba(13,13,22,0.86),rgba(6,10,18,0.82)_52%,rgba(20,12,36,0.74))] shadow-[0_34px_120px_rgba(0,0,0,0.58)] backdrop-blur-2xl sm:min-h-[calc(100vh-2.5rem)] sm:rounded-[28px]">
+    <section className="relative z-10 mx-auto flex h-[calc(100vh-1.5rem)] w-full max-w-[1480px] flex-col overflow-hidden rounded-[24px] border border-white/12 bg-[linear-gradient(145deg,rgba(13,13,22,0.9),rgba(6,10,18,0.86)_52%,rgba(20,12,36,0.78))] shadow-[0_34px_120px_rgba(0,0,0,0.58)] backdrop-blur-2xl sm:h-[calc(100vh-2.5rem)] sm:rounded-[28px]">
       <OSWindowTopBar />
       <OSTabBar activeView={props.activeView} onViewChange={props.onViewChange} />
       <StagePane
@@ -159,11 +197,9 @@ function FelipeOSFrame(props: {
         activeView={props.activeView}
         onActiveCaseChange={props.onActiveCaseChange}
         onActiveSystemChange={props.onActiveSystemChange}
-        onChatOpen={() => props.onChatOpenChange(true)}
         onViewChange={props.onViewChange}
       />
       <HeyFelipeDock
-        activeView={props.activeView}
         chatOpen={props.chatOpen}
         onChatOpenChange={props.onChatOpenChange}
         onIntent={props.onIntent}
@@ -174,7 +210,7 @@ function FelipeOSFrame(props: {
 
 function OSWindowTopBar() {
   return (
-    <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 px-3 py-3 sm:px-5">
+    <div className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-white/[0.025] px-3 py-3 sm:px-5">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex gap-2">
           <span className="h-3 w-3 rounded-full bg-red-400/90" />
@@ -183,12 +219,12 @@ function OSWindowTopBar() {
         </div>
         <div className="min-w-0">
           <h1 className="truncate text-sm font-semibold text-white sm:text-base">FelipeOS</h1>
-          <p className="hidden text-xs text-slate-400 sm:block">Product, Growth & AI systems - built into one workspace.</p>
+          <p className="hidden text-xs text-slate-400 sm:block">Product / Growth / AI systems</p>
         </div>
       </div>
       <div className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 md:flex">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
-        Available for Product / Growth / AI systems
+        Available for builds and advisory
       </div>
     </div>
   );
@@ -197,12 +233,14 @@ function OSWindowTopBar() {
 function OSTabBar({ activeView, onViewChange }: { activeView: FelipeOSView; onViewChange: (view: FelipeOSView) => void }) {
   return (
     <nav aria-label="FelipeOS workspace navigation" className="border-b border-white/10 px-2 py-2 sm:px-4">
-      <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => (
           <button
             aria-current={activeView === tab.id ? "page" : undefined}
-            className={`relative flex-none rounded-full px-3 py-2 text-xs font-medium transition sm:px-4 ${
-              activeView === tab.id ? "text-white" : "text-slate-400 hover:text-slate-100"
+            className={`relative flex-none rounded-full px-3.5 py-2 text-xs font-medium outline-none transition sm:px-4 ${
+              activeView === tab.id
+                ? "text-white"
+                : "text-slate-400 hover:bg-white/[0.045] hover:text-slate-100 focus-visible:bg-white/[0.06]"
             }`}
             key={tab.id}
             onClick={() => onViewChange(tab.id)}
@@ -210,11 +248,14 @@ function OSTabBar({ activeView, onViewChange }: { activeView: FelipeOSView; onVi
           >
             {activeView === tab.id ? (
               <motion.span
-                className="absolute inset-0 rounded-full border border-purple-300/30 bg-purple-400/15 shadow-[0_0_24px_rgba(139,92,246,0.16)]"
+                className="absolute inset-0 rounded-full border border-cyan-300/25 bg-[linear-gradient(135deg,rgba(139,92,246,0.24),rgba(34,211,238,0.12))] shadow-[0_0_28px_rgba(139,92,246,0.22)]"
                 layoutId="felipe-os-active-tab"
               />
             ) : null}
             <span className="relative">{tab.label}</span>
+            {activeView === tab.id ? (
+              <motion.span className="absolute -bottom-2 left-1/2 h-px w-8 -translate-x-1/2 bg-cyan-200/80" layoutId="felipe-os-active-underline" />
+            ) : null}
           </button>
         ))}
       </div>
@@ -228,11 +269,10 @@ function StagePane(props: {
   activeView: FelipeOSView;
   onActiveCaseChange: (id: CaseStudyId) => void;
   onActiveSystemChange: (id: SystemId) => void;
-  onChatOpen: () => void;
   onViewChange: (view: FelipeOSView) => void;
 }) {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 pb-36 [scrollbar-width:none] sm:px-5 lg:px-6 [&::-webkit-scrollbar]:hidden">
+    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 pb-28 [scrollbar-width:none] sm:px-5 lg:px-6 [&::-webkit-scrollbar]:hidden">
       <AnimatePresence mode="wait">
         <motion.div
           animate={{ opacity: 1, y: 0 }}
@@ -243,7 +283,11 @@ function StagePane(props: {
         >
           {props.activeView === "command" ? (
             <CommandCenterView
-              onChatOpen={props.onChatOpen}
+              onOpenCaseStudies={() => props.onViewChange("case-studies")}
+              onOpenSystem={(id) => {
+                props.onActiveSystemChange(id);
+                props.onViewChange("systems");
+              }}
               onShowProof={() => props.onViewChange("case-studies")}
               onShowSystems={() => props.onViewChange("systems")}
             />
@@ -264,61 +308,87 @@ function StagePane(props: {
 }
 
 function CommandCenterView({
-  onChatOpen,
+  onOpenCaseStudies,
+  onOpenSystem,
   onShowProof,
   onShowSystems,
 }: {
-  onChatOpen: () => void;
+  onOpenCaseStudies: () => void;
+  onOpenSystem: (id: SystemId) => void;
   onShowProof: () => void;
   onShowSystems: () => void;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
-      <div className="flex flex-col justify-between rounded-[22px] border border-white/10 bg-white/[0.045] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-7">
+    <div className="grid min-w-0 gap-5 xl:grid-cols-[0.9fr_1.1fr] xl:items-stretch">
+      <div className="min-w-0 rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-7">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">FelipeOS Command Center</p>
-          <h2 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.03] text-white sm:text-5xl lg:text-6xl">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Command Center</p>
+          <h2 className="mt-5 max-w-3xl break-words text-[2.05rem] font-semibold leading-[1.05] text-white sm:text-5xl">
             I build AI-powered systems that turn messy operations into scalable growth engines.
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-            Agentic workflows, AI assistants, automations, API integrations, paid growth systems and dashboards - designed, built and shipped.
+            Agentic workflows, AI assistants, automations, API integrations, paid growth systems and dashboards — designed, built and shipped.
           </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-100" onClick={onShowSystems} type="button">
-            Explore systems
-          </button>
-          <button className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/50" onClick={onShowProof} type="button">
-            Show proof
-          </button>
-          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:border-purple-200/50" onClick={onChatOpen} type="button">
-            Hey Felipe
-          </button>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-6 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
           {proofMetrics.map(([value, label, tag]) => (
             <MetricWidget key={value} label={label} tag={tag} value={value} />
           ))}
         </div>
-        <StagePreview mockup="spotz" />
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[0_12px_30px_rgba(255,255,255,0.08)] transition hover:bg-cyan-100" onClick={onShowSystems} type="button">
+            Explore systems
+          </button>
+          <button className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/50 hover:bg-cyan-300/15" onClick={onShowProof} type="button">
+            Show proof
+          </button>
+        </div>
+      </div>
+
+      <div className="grid min-w-0 gap-4">
+        <div className="rounded-[22px] border border-white/10 bg-black/28 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-100/60">FelipeOS System Map</p>
+              <h3 className="mt-1 text-xl font-semibold text-white">Pick a system surface.</h3>
+            </div>
+            <span className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100 sm:inline-flex">
+              Adaptive stage
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {systemMapModules.map((module, index) => (
+              <motion.button
+                animate={{ opacity: 1, y: 0 }}
+                className="group rounded-[18px] border border-white/10 bg-white/[0.045] p-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] outline-none transition hover:border-cyan-300/30 hover:bg-cyan-300/[0.07] focus-visible:border-cyan-200/50"
+                initial={{ opacity: 0, y: 8 }}
+                key={module.title}
+                onClick={() => (module.systemId ? onOpenSystem(module.systemId) : onOpenCaseStudies())}
+                transition={{ delay: index * 0.04, duration: 0.32 }}
+                type="button"
+              >
+                <span className="mb-3 block h-1.5 w-10 rounded-full bg-[linear-gradient(90deg,#8b5cf6,#22d3ee)] opacity-70 transition group-hover:w-16 group-hover:opacity-100" />
+                <span className="block text-base font-semibold text-white">{module.title}</span>
+                <span className="mt-1 block text-sm leading-6 text-slate-400">{module.description}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
-function MetricWidget({ label, tag, value }: { label: string; tag: string; value: string }) {
+function MetricWidget({ label, value }: { label: string; tag: string; value: string }) {
   return (
     <motion.div
-      className="rounded-[18px] border border-white/10 bg-black/30 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="min-w-[8.25rem] rounded-[16px] border border-white/10 bg-black/30 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-w-0"
       whileHover={{ y: -3 }}
       transition={{ damping: 25, stiffness: 260, type: "spring" }}
     >
-      <p className="text-xl font-semibold text-white">{value}</p>
-      <p className="mt-1 text-sm text-slate-300">{label}</p>
-      <p className="mt-3 text-[0.66rem] uppercase tracking-[0.16em] text-cyan-100/50">{tag}</p>
+      <p className="text-base font-semibold text-white">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-300">{label}</p>
     </motion.div>
   );
 }
@@ -333,17 +403,19 @@ function SystemsView({
   const active = systems.find((system) => system.id === activeSystemId) ?? systems[0];
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
+    <div className="grid gap-5 xl:grid-cols-[0.78fr_1.22fr]">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Systems I Build</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Commercial AI, growth and product systems.</h2>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Systems</p>
+        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Systems I build.</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-400">Each module changes the active workspace preview.</p>
         <div className="mt-5 grid gap-3">
           {systems.map((system) => (
             <button
-              className={`rounded-[18px] border p-4 text-left transition ${
+              aria-pressed={active.id === system.id}
+              className={`rounded-[18px] border p-4 text-left outline-none transition ${
                 active.id === system.id
-                  ? "border-purple-300/35 bg-purple-400/12 shadow-[0_0_34px_rgba(139,92,246,0.12)]"
-                  : "border-white/10 bg-white/[0.04] hover:border-cyan-300/25 hover:bg-cyan-300/[0.055]"
+                  ? "border-cyan-300/35 bg-[linear-gradient(135deg,rgba(139,92,246,0.16),rgba(34,211,238,0.08))] shadow-[0_0_34px_rgba(34,211,238,0.1)]"
+                  : "border-white/10 bg-white/[0.035] hover:border-cyan-300/25 hover:bg-cyan-300/[0.055] focus-visible:border-cyan-200/40"
               }`}
               key={system.id}
               onClick={() => onActiveSystemChange(system.id)}
@@ -385,31 +457,36 @@ function CaseStudiesView({
   const active = caseStudies.find((study) => study.id === activeCaseId) ?? caseStudies[0];
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.76fr_1.24fr]">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Case Studies</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Representative product renders with proof attached.</h2>
-        <div className="mt-5 grid gap-2">
+    <div className="grid gap-5">
+      <div className="flex flex-col gap-4 rounded-[22px] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
+        <div className="max-w-3xl">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Selected work</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Product renders with proof attached.</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-400">Stylized mockups show the system without exposing client data.</p>
+        </div>
+        <div className="flex gap-2 overflow-x-auto rounded-[18px] border border-white/10 bg-black/25 p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {caseStudies.map((study) => (
             <button
-              className={`rounded-[16px] border p-3 text-left transition ${
-                active.id === study.id ? "border-cyan-300/35 bg-cyan-300/10" : "border-white/10 bg-white/[0.035] hover:border-purple-300/25"
+              aria-pressed={active.id === study.id}
+              className={`flex-none rounded-[14px] px-3 py-2 text-left text-xs font-medium outline-none transition sm:px-4 ${
+                active.id === study.id
+                  ? "bg-[linear-gradient(135deg,rgba(139,92,246,0.32),rgba(34,211,238,0.16))] text-white shadow-[0_0_22px_rgba(139,92,246,0.18)]"
+                  : "text-slate-400 hover:bg-white/[0.055] hover:text-slate-100 focus-visible:bg-white/[0.07]"
               }`}
               key={study.id}
               onClick={() => onActiveCaseChange(study.id)}
               type="button"
             >
-              <p className="text-sm font-semibold text-white">{study.title}</p>
-              <p className="mt-1 text-xs text-slate-400">{study.category}</p>
+              {study.title}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
         <StagePreview mockup={active.mockup} />
         <article className="rounded-[20px] border border-white/10 bg-black/30 p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-purple-100/55">{active.category}</p>
               <h3 className="mt-1 text-2xl font-semibold text-white">{active.title}</h3>
@@ -423,7 +500,7 @@ function CaseStudiesView({
               ))}
             </div>
           </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="mt-5 grid gap-3">
             {[
               ["Problem", active.problem],
               ["System built", active.system],
@@ -534,13 +611,19 @@ function ContactView() {
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 16 16">
+      <path d="M4.5 4.5 11.5 11.5M11.5 4.5 4.5 11.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
 function HeyFelipeDock({
-  activeView,
   chatOpen,
   onChatOpenChange,
   onIntent,
 }: {
-  activeView: FelipeOSView;
   chatOpen: boolean;
   onChatOpenChange: (open: boolean) => void;
   onIntent: (intent: RouteIntent) => void;
@@ -551,10 +634,8 @@ function HeyFelipeDock({
       text: "Hi, I'm Felipe. I build AI-powered systems for product, growth and operations. What would you like to explore?",
     },
   ]);
-  const [nextActions, setNextActions] = useState(["Show me AI systems", "Show growth results", "What can you build?"]);
   const [input, setInput] = useState("");
-
-  const activeLabel = useMemo(() => tabs.find((tab) => tab.id === activeView)?.label ?? "Command Center", [activeView]);
+  const suggestions = quickPrompts.slice(0, 4).map((route) => route.prompt);
 
   function submit(text: string) {
     const value = text.trim();
@@ -563,47 +644,45 @@ function HeyFelipeDock({
     onIntent(intent);
     onChatOpenChange(true);
     setMessages((current) => [...current, { role: "user", text: value }, { role: "felipe", text: intent.response }]);
-    setNextActions(intent.nextActions);
     setInput("");
   }
 
   return (
     <div className="absolute inset-x-3 bottom-3 z-30 sm:inset-x-5 sm:bottom-5">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {chatOpen ? (
           <ChatPanel
+            key="hey-felipe-panel"
             input={input}
             messages={messages}
-            nextActions={nextActions}
+            suggestions={suggestions}
             onClose={() => onChatOpenChange(false)}
             onInputChange={setInput}
             onSubmit={submit}
           />
-        ) : null}
-      </AnimatePresence>
-      <div className="mt-3 rounded-[22px] border border-white/10 bg-black/55 p-2 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          <button
-            className="flex min-w-0 flex-1 items-center gap-3 rounded-[16px] border border-white/10 bg-white/[0.055] px-4 py-3 text-left transition hover:border-purple-300/30"
-            onClick={() => onChatOpenChange(true)}
-            type="button"
+        ) : (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[22px] border border-white/10 bg-black/60 p-2 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
+            exit={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 12 }}
+            key="hey-felipe-dock"
+            transition={{ damping: 26, stiffness: 260, type: "spring" }}
           >
-            <span className="grid h-9 w-9 flex-none place-items-center rounded-2xl bg-[linear-gradient(135deg,#8b5cf6,#22d3ee)] text-sm font-bold text-white">HF</span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-white">Hey Felipe</span>
-              <span className="block truncate text-sm text-slate-400">Ask what I can build for your team...</span>
-            </span>
-          </button>
-          <div className="flex flex-wrap gap-2">
-            {quickPrompts.slice(0, 4).map((route) => (
-              <button className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10" key={route.prompt} onClick={() => submit(route.prompt)} type="button">
-                {route.prompt}
-              </button>
-            ))}
-          </div>
-          <span className="hidden rounded-full border border-white/10 bg-black/30 px-3 py-2 text-xs text-slate-400 xl:inline-flex">{activeLabel}</span>
-        </div>
-      </div>
+            <button
+              className="flex w-full min-w-0 items-center gap-3 rounded-[16px] border border-white/10 bg-white/[0.055] px-4 py-3 text-left outline-none transition hover:border-purple-300/30 hover:bg-purple-400/[0.07] focus-visible:border-cyan-200/45"
+              onClick={() => onChatOpenChange(true)}
+              type="button"
+            >
+              <span className="grid h-9 w-9 flex-none place-items-center rounded-2xl bg-[linear-gradient(135deg,#8b5cf6,#22d3ee)] text-sm font-bold text-white shadow-[0_0_24px_rgba(139,92,246,0.28)]">HF</span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-white">Hey Felipe — ask what I can build for your team…</span>
+                <span className="hidden truncate text-xs text-slate-400 sm:block">Command palette for systems, proof, CV and contact.</span>
+              </span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -611,14 +690,14 @@ function HeyFelipeDock({
 function ChatPanel({
   input,
   messages,
-  nextActions,
+  suggestions,
   onClose,
   onInputChange,
   onSubmit,
 }: {
   input: string;
   messages: Array<{ role: "user" | "felipe"; text: string }>;
-  nextActions: string[];
+  suggestions: string[];
   onClose: () => void;
   onInputChange: (value: string) => void;
   onSubmit: (value: string) => void;
@@ -626,7 +705,7 @@ function ChatPanel({
   return (
     <motion.div
       animate={{ opacity: 1, y: 0 }}
-      className="ml-auto max-h-[58vh] w-full max-w-2xl overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,10,18,0.94),rgba(8,15,24,0.92))] shadow-[0_22px_90px_rgba(0,0,0,0.52)] backdrop-blur-2xl"
+      className="ml-auto max-h-[min(70vh,36rem)] w-full max-w-3xl overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,10,18,0.99),rgba(8,15,24,0.985))] shadow-[0_22px_90px_rgba(0,0,0,0.58)] backdrop-blur-2xl"
       exit={{ opacity: 0, y: 12 }}
       initial={{ opacity: 0, y: 12 }}
       transition={{ damping: 26, stiffness: 260, type: "spring" }}
@@ -636,8 +715,8 @@ function ChatPanel({
           <p className="text-sm font-semibold text-white">Hey Felipe</p>
           <p className="text-xs text-slate-400">Dockable assistant / command palette</p>
         </div>
-        <button aria-label="Close Hey Felipe" className="grid h-8 w-8 place-items-center rounded-full border border-white/10 text-slate-300 transition hover:text-white" onClick={onClose} type="button">
-          x
+        <button aria-label="Close Hey Felipe" className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-slate-300 transition hover:border-cyan-300/30 hover:text-white" onClick={onClose} type="button">
+          <CloseIcon />
         </button>
       </div>
       <div className="max-h-64 overflow-y-auto px-4 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -659,7 +738,7 @@ function ChatPanel({
       </div>
       <div className="border-t border-white/10 px-4 py-3">
         <div className="mb-3 flex flex-wrap gap-2">
-          {nextActions.slice(0, 3).map((action) => (
+          {suggestions.map((action) => (
             <button className="rounded-full border border-purple-300/20 bg-purple-400/10 px-3 py-1.5 text-xs text-purple-100 transition hover:border-cyan-300/30 hover:bg-cyan-300/10" key={action} onClick={() => onSubmit(action)} type="button">
               {action}
             </button>

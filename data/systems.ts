@@ -47,7 +47,7 @@ export const systems: SystemModule[] = [
   },
   {
     id: "automation-integrations",
-    title: "Automation & Integrations",
+    title: "Automation & APIs",
     description: "Connecting tools, APIs and data sources so work moves without copy-paste.",
     examples: ["Gmail", "Notion", "CRM", "WhatsApp", "Google Ads / Meta Ads", "Stripe"],
     mockup: "b2b",
@@ -73,6 +73,6 @@ export const systems: SystemModule[] = [
     description: "From MVP to internal tools, I build usable products that solve real operational problems.",
     examples: ["SaaS MVPs", "Admin panels", "Client portals", "CMS tools", "AI-first workflows", "Dashboards"],
     mockup: "spotz",
-    signal: "0->1 shipped",
+    signal: "0→1 shipped",
   },
 ];

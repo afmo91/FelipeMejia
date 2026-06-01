@@ -16,13 +16,13 @@ export const experienceEntries: ExperienceEntry[] = [
     company: "Adamo Telecom",
     role: "Growth Product Manager / Digital Acquisition",
     copy: "Led growth and digital product initiatives for a telecom operator with 500K+ customers.",
-    proof: ["€3M+ annual media budget", "+25% conversion", "-30% CAC", "5 days -> same-day activation", "-15% first-month churn", "€200K+ recovered"],
+    proof: ["€3M+ annual media budget", "+25% conversion", "-30% CAC", "5 days → same-day activation", "-15% first-month churn", "€200K+ recovered"],
   },
   {
     company: "Spotz.pro",
     role: "Founder / Product Builder",
     copy: "Built an AI-powered SaaS platform for multi-channel paid media workflows.",
-    proof: ["0->1 product build", "AI recommendations", "Multi-channel API integrations", "Dashboards + lifecycle metrics", "Freemium / usage pricing tests"],
+    proof: ["0→1 product build", "AI recommendations", "Multi-channel API integrations", "Dashboards + lifecycle metrics", "Freemium / usage pricing tests"],
   },
   {
     company: "Consulting / AI Systems",
