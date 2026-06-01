@@ -1,10 +1,10 @@
-import SignalRoot from "@/components/SignalRoot";
+import FelipeOSWorkspace from "@/components/felipe-os/FelipeOSWorkspace";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Felipe Mejia | Product, Growth & AI Systems",
+  title: "FelipeOS | Product, Growth & AI Systems",
   description:
-    "Felipe Mejia builds AI-enabled products and growth systems. 12+ years from 0→1 across telecoms, SaaS and e-commerce. Product, growth and AI consulting.",
+    "FelipeOS is an AI-powered workspace for growth, product and automation. Felipe Mejia builds AI systems that turn messy operations into scalable growth engines.",
   keywords: [
     "AI product consultant",
     "growth product manager",
@@ -18,5 +18,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <SignalRoot />;
+  return <FelipeOSWorkspace />;
 }

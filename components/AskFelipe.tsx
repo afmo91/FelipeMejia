@@ -86,21 +86,21 @@ export default function AskFelipe() {
   }
 
   function sendContext() {
-    const brief = [`Ask Felipe context:`, message, "", answer?.answer || section.note].join("\n");
+    const brief = [`Hey Felipe context:`, message, "", answer?.answer || section.note].join("\n");
     window.dispatchEvent(new CustomEvent("prefill-contact-message", { detail: { message: brief } }));
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
     setOpen(false);
   }
 
   return (
-    <aside className="ask-felipe" aria-label="Ask Felipe assistant" ref={asideRef}>
+    <aside className="ask-felipe" aria-label="Hey Felipe assistant" ref={asideRef}>
       <button
         aria-expanded={open}
         className="ask-felipe-trigger"
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <span>Ask Felipe</span>
+        <span>Hey Felipe</span>
         <small>{section.label}</small>
       </button>
 
@@ -113,7 +113,7 @@ export default function AskFelipe() {
               <p>{section.note}</p>
             </div>
             <button
-              aria-label="Close Ask Felipe"
+              aria-label="Close Hey Felipe"
               className="flex-shrink-0 border border-white/10 bg-black/30 px-2 py-1 text-sm text-gray-400 hover:text-white transition"
               onClick={() => setOpen(false)}
               type="button"
@@ -137,7 +137,7 @@ export default function AskFelipe() {
                 onSubmit={(e) => { e.preventDefault(); void askFelipe(); }}
               >
                 <label className="sr-only" htmlFor="ask-felipe-input">
-                  Ask Felipe about a product, growth, or AI workflow challenge
+                  Ask Hey Felipe about a product, growth, or AI workflow challenge
                 </label>
                 <textarea
                   className="form-field min-h-20 resize-y text-sm"

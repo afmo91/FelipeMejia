@@ -206,7 +206,7 @@ function InputRow({ disabled, onSend }: { disabled: boolean; onSend: (text: stri
   return (
     <div className="flex items-end gap-2 border-t border-white/10 px-3 py-3">
       <textarea
-        aria-label="Ask Felipe a question"
+        aria-label="Hey Felipe question"
         className="min-h-10 flex-1 resize-none rounded-xl border border-white/10 bg-white/[0.055] px-3 py-2.5 text-[0.92rem] leading-5 text-slate-100 outline-none transition placeholder:text-slate-400/60 focus:border-cyan-300/30 focus:ring-2 focus:ring-cyan-300/10 disabled:opacity-60"
         disabled={disabled}
         onChange={onChange}
