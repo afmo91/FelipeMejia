@@ -15,6 +15,52 @@
   --border:   rgba(255,255,255,0.08);
   --text:     #f0f0f8;
   --muted:    rgba(240,240,248,0.45);
+  --fos-bg: #05050b;
+  --fos-wallpaper-1: rgba(139,92,246,0.32);
+  --fos-wallpaper-2: rgba(34,211,238,0.24);
+  --fos-surface: rgba(7,10,20,0.72);
+  --fos-surface-glass: rgba(255,255,255,0.052);
+  --fos-border: rgba(255,255,255,0.1);
+  --fos-text: #f7f8ff;
+  --fos-muted: rgba(226,232,240,0.62);
+  --fos-purple: #8b5cf6;
+  --fos-cyan: #22d3ee;
+  --fos-green: #34d399;
+}
+
+[data-felipe-theme="light"] {
+  color-scheme: light;
+  --fos-bg: #edf1f7;
+  --fos-wallpaper-1: rgba(139,92,246,0.22);
+  --fos-wallpaper-2: rgba(14,165,233,0.22);
+  --fos-surface: rgba(255,255,255,0.66);
+  --fos-surface-glass: rgba(255,255,255,0.58);
+  --fos-border: rgba(15,23,42,0.12);
+  --fos-text: #0f172a;
+  --fos-muted: rgba(51,65,85,0.68);
+  --fos-purple: #7c3aed;
+  --fos-cyan: #0284c7;
+  --fos-green: #059669;
+}
+
+[data-felipe-theme="light"] .text-white,
+[data-felipe-theme="light"] .text-slate-100,
+[data-felipe-theme="light"] .text-slate-200 {
+  color: var(--fos-text) !important;
+}
+
+[data-felipe-theme="light"] .text-slate-300,
+[data-felipe-theme="light"] .text-slate-400,
+[data-felipe-theme="light"] .text-slate-500 {
+  color: var(--fos-muted) !important;
+}
+
+[data-felipe-theme="light"] .bg-black\/20,
+[data-felipe-theme="light"] .bg-black\/25,
+[data-felipe-theme="light"] .bg-black\/28,
+[data-felipe-theme="light"] .bg-black\/30,
+[data-felipe-theme="light"] .bg-black\/55 {
+  background-color: rgba(255,255,255,0.34) !important;
 }
 
 html { scroll-behavior: smooth; }
