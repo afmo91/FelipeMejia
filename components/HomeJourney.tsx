@@ -74,7 +74,7 @@ const items: JourneyItem[] = [
   {
     id: "case-studies",
     kicker: "Problem → Move → Result",
-    label: "Case Studies",
+    label: "Proof of Work",
     metrics: ["AI ads", "Digital onboarding", "Attribution", "Experimentation"],
     note: "Every useful case study should answer the same question: what changed because of the work?",
     scan: "Proof map",
@@ -182,7 +182,7 @@ function SectionBody({ item }: { item: JourneyItem }) {
           </article>
         ))}
         <Link className="button-secondary mt-6 inline-flex" href="/cv">
-          Protected CV downloads
+          Public CV
         </Link>
       </div>
     );

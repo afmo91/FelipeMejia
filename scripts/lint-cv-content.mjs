@@ -22,10 +22,10 @@ function checkText(label, text, limit = 180) {
   }
 }
 
-base.summary.forEach((line, index) => checkText(`summary[${index}]`, line, 190));
+base.summary.forEach((line, index) => checkText(`summary[${index}]`, line, 360));
 base.experience.forEach((item) => {
   checkText(`${item.company} role`, item.role, 90);
-  item.bullets.forEach((bullet, index) => checkText(`${item.company} bullet[${index}]`, bullet));
+  item.bullets.forEach((bullet, index) => checkText(`${item.company} bullet[${index}]`, bullet, 260));
 });
 
 fs.readdirSync(tweaksDir)

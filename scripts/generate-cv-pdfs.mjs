@@ -13,6 +13,7 @@ import {
 const root = process.cwd();
 const cvDir = path.join(root, "data/cv");
 const tweaksDir = path.join(cvDir, "tweaks");
+const versionsDir = path.join(cvDir, "versions");
 const outputDir = path.join(root, "public/cv");
 
 function readJson(file) {
@@ -188,11 +189,20 @@ function CVDocument({ cv }) {
 
 fs.mkdirSync(outputDir, { recursive: true });
 
-const base = readJson(path.join(cvDir, "base.json"));
-const tweaks = fs
-  .readdirSync(tweaksDir)
-  .filter((file) => file.endsWith(".json"))
-  .map((file) => readJson(path.join(tweaksDir, file)));
+const publicCVFile = path.join(cvDir, "public.json");
+const base = readJson(fs.existsSync(publicCVFile) ? publicCVFile : path.join(cvDir, "base.json"));
+const tweakSources = [versionsDir, tweaksDir].filter((dir) => fs.existsSync(dir));
+const tweaks = tweakSources
+  .flatMap((dir) =>
+    fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => readJson(path.join(dir, file))),
+  )
+  .filter((tweak, index, all) => all.findIndex((item) => item.slug === tweak.slug) === index);
+
+await renderToFile(React.createElement(CVDocument, { cv: base }), path.join(outputDir, "felipe-mejia-public-cv.pdf"));
+console.log("Generated public/cv/felipe-mejia-public-cv.pdf");
 
 for (const tweak of tweaks) {
   const cv = combineCV(base, tweak);

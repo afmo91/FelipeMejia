@@ -9,7 +9,6 @@ const navItems = [
   { href: "/blog", label: "Blog" },
   { href: "/cv", label: "CV" },
   { href: "/contact", label: "Contact" },
-  { href: "/login", label: "Login" },
 ];
 
 function isActiveLink(pathname: string, href: string) {

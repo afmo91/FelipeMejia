@@ -41,6 +41,9 @@ export default function SiteFooter() {
               {link.text}
             </a>
           ))}
+          <Link className="footer-link opacity-60 transition hover:opacity-100" href="/admin">
+            Admin
+          </Link>
         </nav>
       </div>
     </footer>

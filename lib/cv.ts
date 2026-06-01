@@ -3,6 +3,9 @@ import path from "path";
 
 const cvDir = path.join(process.cwd(), "data/cv");
 const tweaksDir = path.join(cvDir, "tweaks");
+const versionsDir = path.join(cvDir, "versions");
+const publicCVFile = path.join(cvDir, "public.json");
+const baseCVFile = path.join(cvDir, "base.json");
 
 export type ContactLink = {
   label: string;
@@ -29,7 +32,10 @@ export type BaseCV = {
   summary: string[];
   contact: CVContact;
   experience: CVExperience[];
+  selectedAchievements?: string[];
   skills: Record<string, string[]>;
+  tools?: string[];
+  languages?: string[];
 };
 
 export type CVTweak = {
@@ -65,18 +71,20 @@ function reorderBullets(bullets: string[], preferred: string[] = []) {
 }
 
 export function getBaseCV(): BaseCV {
-  return readJson<BaseCV>(path.join(cvDir, "base.json"));
+  return readJson<BaseCV>(fs.existsSync(publicCVFile) ? publicCVFile : baseCVFile);
 }
 
 export function getCVTweaks(): CVTweak[] {
-  if (!fs.existsSync(tweaksDir)) {
-    return [];
-  }
+  const sources = [versionsDir, tweaksDir].filter((dir) => fs.existsSync(dir));
 
-  return fs
-    .readdirSync(tweaksDir)
-    .filter((file) => file.endsWith(".json"))
-    .map((file) => readJson<CVTweak>(path.join(tweaksDir, file)))
+  return sources
+    .flatMap((dir) =>
+      fs
+        .readdirSync(dir)
+        .filter((file) => file.endsWith(".json"))
+        .map((file) => readJson<CVTweak>(path.join(dir, file))),
+    )
+    .filter((tweak, index, all) => all.findIndex((item) => item.slug === tweak.slug) === index)
     .sort((a, b) => a.application.localeCompare(b.application));
 }
 

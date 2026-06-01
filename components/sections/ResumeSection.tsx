@@ -18,7 +18,7 @@ export default function ResumeSection() {
           </div>
           <div className="mt-7 flex flex-wrap gap-4">
             <Link className="button-primary" href="/cv">
-              Protected CV Downloads
+              Public CV
             </Link>
             <a className="button-secondary" href={`mailto:${cv.contact.email}`}>
               Discuss a project

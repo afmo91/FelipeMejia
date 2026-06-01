@@ -1,24 +1,26 @@
-# Felipe Mejia Portfolio (Next.js 14)
+# FelipeOS
+
+Premium personal portfolio and commercial workspace for Felipe Mejia: product, growth and AI systems, public CV, proof of work, and private admin tooling.
+
+## Stack
+
+- Next.js App Router, TypeScript, Tailwind CSS
+- Framer Motion for workspace transitions
+- NextAuth credentials login for private admin access
+- Local JSON CV data for the MVP
+- React PDF generation for CV PDFs
 
 ## Setup
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start dev server:
-   ```bash
-   npm run dev
-   ```
-3. Open http://localhost:3000
-
-Generate protected CV PDFs after editing `data/cv/base.json` or files in `data/cv/tweaks`:
 
 ```bash
-npm run lint:cv
-npm run generate:cv-pdfs
+npm install
+npm run dev
 ```
 
+Open `http://localhost:3000`.
+
 ## Environment Variables
+
 Create `.env.local`:
 
 ```env
@@ -27,11 +29,31 @@ AUTH_USERNAME=admin
 AUTH_PASSWORD=securePassword123
 ```
 
+## CV Workflow
+
+The public CV is visible at `/cv` and downloadable at `/cv/felipe-mejia-public-cv.pdf`.
+
+Source files:
+
+- `data/cv/public.json`: public CV source of truth
+- `data/cv/base.json`: mirrored public CV for existing scripts
+- `data/cv/versions/*.json`: tailored application versions
+- `public/cv/felipe-mejia-public-cv.pdf`: public downloadable PDF
+
+Generate CV PDFs after editing CV JSON:
+
+```bash
+npm run lint:cv
+npm run generate:cv-pdfs
+```
+
+The `/admin` workspace is protected by NextAuth and can edit the public CV JSON locally, create tailored versions, and link to available PDF downloads. Local JSON writes are suitable for this MVP/admin workflow; before multi-user production editing, move CV storage to a database or managed CMS.
+
 ## Features
-- Next.js 14 App Router + TypeScript
-- Tailwind CSS dark theme
-- Fixed reactive procedural wireframe bust with mouse and scroll look behavior
-- Blog from markdown
-- Homepage sections for About, Resume, Portfolio, and Contact
-- Interactive resume timeline from structured CV JSON
-- Protected CV pages and static PDF downloads behind NextAuth middleware
+
+- FelipeOS Command Center with Services, Systems, Proof of Work, Experience, CV, Contact, and Hey Felipe command dock
+- Commercial services for AI workflow sprints, growth audits, AI assistant builds, and MVP/product builds
+- Safe representative proof-of-work case studies without client-sensitive data
+- Public CV page and download
+- Footer-only admin access
+- Private admin CV workspace

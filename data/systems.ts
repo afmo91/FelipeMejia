@@ -20,7 +20,7 @@ export const systems: SystemModule[] = [
   {
     id: "ai-assistants",
     title: "AI Assistants",
-    description: "Custom assistants that help teams answer, search, draft, classify, qualify and execute.",
+    description: "AI embedded in real workflows to answer, search, draft, classify, qualify and route work with humans in control.",
     examples: [
       "Customer support assistants",
       "Internal copilots",
@@ -34,7 +34,7 @@ export const systems: SystemModule[] = [
   {
     id: "agentic-workflows",
     title: "Agentic Workflows",
-    description: "Multi-step agents that research, decide, route and update systems without manual coordination.",
+    description: "Multi-step operating loops that research, decide, route and update systems without manual coordination.",
     examples: [
       "Lead enrichment",
       "Automated outreach",
@@ -48,7 +48,7 @@ export const systems: SystemModule[] = [
   {
     id: "automation-integrations",
     title: "Automation & APIs",
-    description: "Connecting tools, APIs and data sources so work moves without copy-paste.",
+    description: "Automation and API connections that move work across tools without copy-paste or lost context.",
     examples: ["Gmail", "Notion", "CRM", "WhatsApp", "Google Ads / Meta Ads", "Stripe"],
     mockup: "b2b",
     signal: "APIs connected",
@@ -56,7 +56,7 @@ export const systems: SystemModule[] = [
   {
     id: "growth-systems",
     title: "Growth Systems",
-    description: "Paid acquisition, funnel tracking, attribution and experimentation systems built for measurable growth.",
+    description: "Growth infrastructure, not just campaigns: funnel tracking, attribution, experimentation and decision dashboards.",
     examples: [
       "Paid ads strategy",
       "Landing page tests",
@@ -70,7 +70,7 @@ export const systems: SystemModule[] = [
   {
     id: "product-builds",
     title: "Product Builds",
-    description: "From MVP to internal tools, I build usable products that solve real operational problems.",
+    description: "From messy process to operating system: usable products, dashboards and internal tools shipped fast.",
     examples: ["SaaS MVPs", "Admin panels", "Client portals", "CMS tools", "AI-first workflows", "Dashboards"],
     mockup: "spotz",
     signal: "0→1 shipped",

@@ -10,7 +10,7 @@ export const experienceEntries: ExperienceEntry[] = [
     company: "Segmentta",
     role: "Co-founder / Product & Growth Consultant",
     copy: "Built and scaled a B2B consulting business serving institutional clients in regulated markets.",
-    proof: ["30+ institutional clients", "Pfizer, Bayer, Abbott", "€500K+ annual revenue", "Team of 10"],
+    proof: ["30+ institutional clients", "Healthcare + enterprise", "€500K+ annual revenue", "Team of 10"],
   },
   {
     company: "Adamo Telecom",

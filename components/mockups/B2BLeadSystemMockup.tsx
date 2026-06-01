@@ -51,7 +51,7 @@ export default function B2BLeadSystemMockup({ className }: MockupProps) {
               </span>
             </div>
             <div className="mt-3 grid gap-2 rounded-2xl border border-white/10 bg-black/25 p-3">
-              <p className="text-sm leading-5 text-slate-100">"Need 2,000 units for food packaging. Can you quote delivery to Lyon?"</p>
+              <p className="text-sm leading-5 text-slate-100">&quot;Need 2,000 units for food packaging. Can you quote delivery to Lyon?&quot;</p>
               <div className="flex flex-wrap gap-2">
                 <StatusChip tone="green">Product matched</StatusChip>
                 <StatusChip tone="cyan">Routed to sales</StatusChip>

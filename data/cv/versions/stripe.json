@@ -1,0 +1,22 @@
+{
+  "slug": "stripe",
+  "title": "Stripe Growth Product CV",
+  "application": "Stripe",
+  "summaryAdditions": [
+    "Emphasizes monetization, pricing experiments, full-funnel instrumentation, and product-led growth execution."
+  ],
+  "skillAdditions": {
+    "Growth": ["monetization experiments", "activation loops"],
+    "Product": ["pricing strategy"]
+  },
+  "highlightOrder": {
+    "Spotz.pro": [
+      "Tested freemium + usage pricing; instrumented activation and retention; iterated based on lifecycle data.",
+      "Led end-to-end delivery: specs, cross-functional alignment, API integrations, QA and releases."
+    ],
+    "Adamo Telecom": [
+      "Built experimentation cadence (+25% conversion, -30% CAC); owned €3M+ annual budget across Google Ads, Meta Ads, programmatic.",
+      "Migrated legacy onboarding to digital-first; aligned engineering/data/commercial teams across Spain; reduced activation from 5 days → same-day."
+    ]
+  }
+}

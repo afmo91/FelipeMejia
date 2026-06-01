@@ -13,4 +13,4 @@ export async function proxy(request: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-export const config = { matcher: ["/cv", "/cv/:path*"] };
+export const config = { matcher: ["/admin", "/admin/:path*"] };

@@ -1,4 +1,5 @@
 import FelipeOSWorkspace from "@/components/felipe-os/FelipeOSWorkspace";
+import { getBaseCV } from "@/lib/cv";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,5 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <FelipeOSWorkspace />;
+  return <FelipeOSWorkspace publicCV={getBaseCV()} />;
 }

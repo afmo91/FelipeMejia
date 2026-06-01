@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Sign in to access tailored CV pages from Felipe Mejia.",
+  description: "Sign in to access the private FelipeOS admin workspace.",
 };
 
 export default function LoginPage() {
@@ -12,9 +12,9 @@ export default function LoginPage() {
     <section className="section">
       <div className="max-w-3xl">
         <p className="text-sm font-medium text-accent2">Login</p>
-        <h1 className="mt-4 text-4xl font-semibold text-white md:text-6xl">Protected CV Access</h1>
+        <h1 className="mt-4 text-4xl font-semibold text-white md:text-6xl">Admin Access</h1>
         <p className="mt-6 text-lg leading-8 text-gray-300">
-          Tailored CV pages are available after sign-in.
+          Private admin tools manage public CV data and tailored application versions.
         </p>
       </div>
       <Suspense fallback={<p className="mt-10 text-gray-300">Loading sign-in form...</p>}>
