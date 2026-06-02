@@ -20,7 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import AnimatedFelipeOSLogo from "@/components/brand/AnimatedFelipeOSLogo";
 import FelipeOSWordmark from "@/components/brand/FelipeOSWordmark";
-import GuidePanel from "@/components/felipe-os/GuidePanel";
+import LiveBuildCanvas from "@/components/felipe-os/LiveBuildCanvas";
 import { caseStudies, type CaseStudyId } from "@/data/caseStudies";
 import { experienceEntries } from "@/data/experience";
 import { quickPrompts, type FelipeOSView } from "@/data/chatFlows";
@@ -189,8 +189,9 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   const [activeView, setActiveView] = useState<FelipeOSView>("command");
   const [activeSystemId, setActiveSystemId] = useState<SystemId>("ai-assistants");
   const [activeCaseId, setActiveCaseId] = useState<CaseStudyId>("paid-media-operating-layer");
+  const [selectedService, setSelectedService] = useState(services[0]?.title || "AI Workflow Sprint");
   const [focusMode, setFocusMode] = useState(false);
-  const [guideHidden, setGuideHidden] = useState(false);
+  const [canvasHidden, setCanvasHidden] = useState(false);
   const [bootVisible, setBootVisible] = useState(true);
   const [motionEnabled, setMotionEnabled] = useState(false);
 
@@ -244,10 +245,10 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
       <DesktopBackground motionEnabled={motionEnabled} />
       <TopMenuBar
         activeView={activeView}
-        guideHidden={guideHidden}
+        canvasHidden={canvasHidden}
         motionEnabled={motionEnabled}
         onCommandOpen={() => setActiveView("hey-felipe")}
-        onGuideToggle={() => setGuideHidden((current) => !current)}
+        onCanvasToggle={() => setCanvasHidden((current) => !current)}
         onMotionToggle={() => setMotionEnabled((current) => !current)}
         onViewChange={setActiveView}
       />
@@ -256,23 +257,26 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
         activeSystemId={activeSystemId}
         activeView={activeView}
         focusMode={focusMode}
-        guideHidden={guideHidden}
+        canvasHidden={canvasHidden}
         motionEnabled={motionEnabled}
         onActiveCaseChange={setActiveCaseId}
         onActiveSystemChange={setActiveSystemId}
         onFocusModeChange={setFocusMode}
         onIntent={applyIntent}
+        onSelectedServiceChange={setSelectedService}
         onViewChange={setActiveView}
         publicCV={publicCV}
+        selectedService={selectedService}
       />
-      <GuidePanel
-        activeView={activeView}
+      <LiveBuildCanvas
+        activeApp={activeView}
         bookingHref={BOOKING_HREF}
         bookingTarget={BOOKING_TARGET}
-        hidden={guideHidden || focusMode}
+        hidden={canvasHidden || focusMode}
         motionEnabled={motionEnabled}
-        onHiddenChange={setGuideHidden}
-        onViewChange={setActiveView}
+        selectedCaseStudy={activeCaseId}
+        selectedService={selectedService}
+        selectedSystem={activeSystemId}
       />
       <AnimatePresence>
         {bootVisible ? (
@@ -334,18 +338,18 @@ function DesktopBackground({ motionEnabled }: { motionEnabled: boolean }) {
 
 function TopMenuBar({
   activeView,
-  guideHidden,
+  canvasHidden,
   motionEnabled,
   onCommandOpen,
-  onGuideToggle,
+  onCanvasToggle,
   onMotionToggle,
   onViewChange,
 }: {
   activeView: FelipeOSView;
-  guideHidden: boolean;
+  canvasHidden: boolean;
   motionEnabled: boolean;
   onCommandOpen: () => void;
-  onGuideToggle: () => void;
+  onCanvasToggle: () => void;
   onMotionToggle: () => void;
   onViewChange: (view: FelipeOSView) => void;
 }) {
@@ -402,13 +406,13 @@ function TopMenuBar({
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--fos-green)]" />
           </span>
           <button
-            aria-label={guideHidden ? "Show guide panel" : "Hide guide panel"}
-            aria-pressed={!guideHidden}
+            aria-label={canvasHidden ? "Show Live Build Canvas" : "Hide Live Build Canvas"}
+            aria-pressed={!canvasHidden}
             className="grid h-8 w-8 place-items-center rounded-full border border-[color:var(--fos-border)] bg-[var(--fos-surface-glass)] text-[var(--fos-muted)] outline-none transition hover:text-[var(--fos-text)] focus-visible:text-[var(--fos-text)]"
-            onClick={onGuideToggle}
+            onClick={onCanvasToggle}
             type="button"
           >
-            <PanelRightOpen className={`h-3.5 w-3.5 ${!guideHidden ? "text-[var(--fos-cyan)]" : ""}`} />
+            <PanelRightOpen className={`h-3.5 w-3.5 ${!canvasHidden ? "text-[var(--fos-cyan)]" : ""}`} />
           </button>
           <button
             aria-label={motionEnabled ? "Reduce ambient motion" : "Enable ambient motion"}
@@ -443,20 +447,22 @@ function DesktopShell(props: {
   activeCaseId: CaseStudyId;
   activeSystemId: SystemId;
   activeView: FelipeOSView;
+  canvasHidden: boolean;
   focusMode: boolean;
-  guideHidden: boolean;
   motionEnabled: boolean;
   onActiveCaseChange: (id: CaseStudyId) => void;
   onActiveSystemChange: (id: SystemId) => void;
   onFocusModeChange: (value: boolean) => void;
   onIntent: (intent: RouteIntent) => void;
+  onSelectedServiceChange: (title: string) => void;
   onViewChange: (view: FelipeOSView) => void;
   publicCV: PublicCVData;
+  selectedService: string;
 }) {
   return (
     <div
       className={`relative z-10 flex min-h-screen flex-col px-3 pb-24 pt-14 sm:px-5 lg:pl-8 ${
-        props.focusMode || props.guideHidden ? "lg:pr-8" : "lg:pr-[23.5rem]"
+        props.focusMode || props.canvasHidden ? "lg:pr-8" : "lg:pr-[23.5rem]"
       }`}
     >
       <MainAppWindow
@@ -470,8 +476,10 @@ function DesktopShell(props: {
         onClose={() => props.onViewChange("command")}
         onFocusModeChange={props.onFocusModeChange}
         onIntent={props.onIntent}
+        onSelectedServiceChange={props.onSelectedServiceChange}
         onViewChange={props.onViewChange}
         publicCV={props.publicCV}
+        selectedService={props.selectedService}
       />
 
       {!props.focusMode ? <BottomDock activeView={props.activeView} motionEnabled={props.motionEnabled} onViewChange={props.onViewChange} /> : null}
@@ -490,8 +498,10 @@ function MainAppWindow(props: {
   onClose: () => void;
   onFocusModeChange: (value: boolean) => void;
   onIntent: (intent: RouteIntent) => void;
+  onSelectedServiceChange: (title: string) => void;
   onViewChange: (view: FelipeOSView) => void;
   publicCV: PublicCVData;
+  selectedService: string;
 }) {
   const meta = viewMeta[props.activeView];
 
@@ -530,7 +540,13 @@ function MainAppWindow(props: {
                 onViewChange={props.onViewChange}
               />
             ) : null}
-            {props.activeView === "services" ? <ServicesApp onOpenHeyFelipe={() => props.onViewChange("hey-felipe")} /> : null}
+            {props.activeView === "services" ? (
+              <ServicesApp
+                onOpenHeyFelipe={() => props.onViewChange("hey-felipe")}
+                onSelectedServiceChange={props.onSelectedServiceChange}
+                selectedService={props.selectedService}
+              />
+            ) : null}
             {props.activeView === "systems" ? (
               <SystemsApp activeSystemId={props.activeSystemId} onActiveSystemChange={props.onActiveSystemChange} />
             ) : null}
@@ -943,8 +959,15 @@ function SystemNetworkMap({
   );
 }
 
-function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
-  const [selectedService, setSelectedService] = useState(services[0]?.title || "AI Workflow Sprint");
+function ServicesApp({
+  onOpenHeyFelipe,
+  onSelectedServiceChange,
+  selectedService,
+}: {
+  onOpenHeyFelipe: () => void;
+  onSelectedServiceChange: (title: string) => void;
+  selectedService: string;
+}) {
   const [selectedProblem, setSelectedProblem] = useState("Automate repetitive work");
   const [selectedTimeline, setSelectedTimeline] = useState("This month");
   const problemTypes = [
@@ -1043,7 +1066,7 @@ function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
                         : "border-white/10 bg-black/20 text-emerald-50 hover:border-cyan-300/35"
                     }`}
                     key={service.title}
-                    onClick={() => setSelectedService(service.title)}
+                    onClick={() => onSelectedServiceChange(service.title)}
                     type="button"
                   >
                     {service.title}
