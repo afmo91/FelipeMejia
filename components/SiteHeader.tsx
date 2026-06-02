@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import FelipeOSWordmark from "@/components/brand/FelipeOSWordmark";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -53,12 +54,12 @@ export default function SiteHeader() {
         className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10"
       >
         <Link
-          aria-label="Felipe Mejia home"
-          className="text-xl font-semibold text-white transition hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          aria-label="Felipe OS home"
+          className="transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
           href="/"
           onClick={() => setOpen(false)}
         >
-          FM
+          <FelipeOSWordmark />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">{navItems.map(renderLink)}</div>

@@ -19,7 +19,7 @@ export default function LayoutShell({ children, header, footer }: Props) {
   const isHome = pathname === "/";
 
   if (isHome) {
-    // Homepage is a full-screen FelipeOS experience with its own chrome.
+    // Homepage is a full-screen Felipe OS experience with its own chrome.
     return <>{children}</>;
   }
 

@@ -3,6 +3,7 @@ export type ServiceOffer = {
   description: string;
   bestFor: string;
   deliverables: string[];
+  timeline: string;
   cta: string;
 };
 
@@ -10,26 +11,15 @@ export const services: ServiceOffer[] = [
   {
     title: "AI Workflow Sprint",
     description: "Map one high-value workflow, design the agentic process and ship a working prototype.",
-    bestFor: "Teams with repetitive research, support, admin or CRM tasks.",
+    bestFor: "Teams with repetitive research, support, admin, CRM or reporting tasks.",
     deliverables: [
       "Workflow audit",
       "Agent map",
       "Prototype",
       "Integration plan",
     ],
-    cta: "Book an AI workflow sprint",
-  },
-  {
-    title: "Growth System Audit",
-    description: "Review acquisition, tracking, funnel performance and attribution to identify wasted spend and quick wins.",
-    bestFor: "Teams spending on paid acquisition without clear visibility.",
-    deliverables: [
-      "Tracking review",
-      "CAC/ROAS analysis",
-      "Experiment backlog",
-      "Dashboard recommendations",
-    ],
-    cta: "Request a growth audit",
+    timeline: "1-2 weeks",
+    cta: "Start a workflow sprint",
   },
   {
     title: "AI Assistant Build",
@@ -41,7 +31,21 @@ export const services: ServiceOffer[] = [
       "Knowledge base connection",
       "Human handoff logic",
     ],
+    timeline: "2-4 weeks",
     cta: "Build an assistant",
+  },
+  {
+    title: "Growth System Audit",
+    description: "Review acquisition, tracking, funnel performance and attribution to find waste and quick wins.",
+    bestFor: "Teams spending on paid acquisition without clear visibility.",
+    deliverables: [
+      "Tracking review",
+      "CAC/ROAS analysis",
+      "Experiment backlog",
+      "Dashboard recommendations",
+    ],
+    timeline: "5-10 working days",
+    cta: "Request a growth audit",
   },
   {
     title: "Product / MVP Build",
@@ -53,6 +57,7 @@ export const services: ServiceOffer[] = [
       "MVP build",
       "Deployment plan",
     ],
+    timeline: "3-6 weeks",
     cta: "Discuss a product build",
   },
 ];

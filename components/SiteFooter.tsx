@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CookiePreferencesButton from "@/components/CookiePreferencesButton";
 import { getBaseCV } from "@/lib/cv";
 
 export default function SiteFooter() {
@@ -29,6 +30,7 @@ export default function SiteFooter() {
           <Link className="footer-link" href="/contact">
             Contact
           </Link>
+          <CookiePreferencesButton />
           {socialLinks.map((link) => (
             <a
               aria-label={link.label}

@@ -3,9 +3,9 @@ import { getBaseCV } from "@/lib/cv";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FelipeOS | Product, Growth & AI Systems",
+  title: "Felipe OS | Product, Growth & AI Systems",
   description:
-    "FelipeOS is an AI-powered workspace for growth, product and automation. Felipe Mejia builds AI systems that turn messy operations into scalable growth engines.",
+    "Felipe OS is an AI-powered workspace for growth, product and automation. Felipe Mejia builds AI systems that turn messy operations into scalable growth engines.",
   keywords: [
     "AI product consultant",
     "growth product manager",

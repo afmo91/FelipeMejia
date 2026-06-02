@@ -11,16 +11,16 @@ import {
   LayoutDashboard,
   Mail,
   MessageCircle,
-  Moon,
   Network,
+  PanelRightOpen,
   Search,
-  Sun,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import FelipeOSLogo from "@/components/brand/FelipeOSLogo";
+import AnimatedFelipeOSLogo from "@/components/brand/AnimatedFelipeOSLogo";
 import FelipeOSWordmark from "@/components/brand/FelipeOSWordmark";
+import GuidePanel from "@/components/felipe-os/GuidePanel";
 import { caseStudies, type CaseStudyId } from "@/data/caseStudies";
 import { experienceEntries } from "@/data/experience";
 import { quickPrompts, type FelipeOSView } from "@/data/chatFlows";
@@ -31,6 +31,11 @@ import { StagePreview } from "@/components/mockups";
 const EMAIL = "felipe.mejia@spotz.pro";
 const LINKEDIN = "https://www.linkedin.com/in/felipemejiaosorio/";
 const GITHUB = "https://github.com/afmo91";
+const STATUS_COPY = "Taking on selected AI/product builds";
+const BOOKING_URL = process.env.NEXT_PUBLIC_BOOKING_URL?.trim();
+const BOOKING_HREF =
+  BOOKING_URL || `mailto:${EMAIL}?subject=${encodeURIComponent("Felipe OS discovery call")}`;
+const BOOKING_TARGET = BOOKING_URL ? "_blank" : undefined;
 
 type PublicCVData = {
   title: string;
@@ -129,6 +134,12 @@ function routeMessage(input: string): RouteIntent {
   if (exact) return exact;
 
   const text = input.toLowerCase();
+  if (text.match(/book|booking|calendar|call|discovery|meeting/)) {
+    return {
+      view: "contact",
+      response: "Open Contact. The fastest next step is a 30-minute discovery call around the workflow, growth problem or product opportunity.",
+    };
+  }
   if (text.match(/service|offer|sprint|audit|buy|price|help|company|client/)) {
     return {
       view: "services",
@@ -158,7 +169,7 @@ function routeMessage(input: string): RouteIntent {
   if (text.match(/contact|email|linkedin|hire|call|github/)) {
     return {
       view: "contact",
-      response: "Open Contact. Send the workflow, tools, bottleneck, and target metric.",
+      response: "Open Contact. Book a 30-minute call or send the workflow, tools, bottleneck, and target metric.",
     };
   }
   if (text.match(/experience|adamo|spotz|segmentta|career/)) {
@@ -179,10 +190,36 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   const [activeSystemId, setActiveSystemId] = useState<SystemId>("ai-assistants");
   const [activeCaseId, setActiveCaseId] = useState<CaseStudyId>("paid-media-operating-layer");
   const [focusMode, setFocusMode] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [motionEnabled, setMotionEnabled] = useState(
-    () => typeof window === "undefined" || !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const [guideHidden, setGuideHidden] = useState(false);
+  const [bootVisible, setBootVisible] = useState(true);
+  const [motionEnabled, setMotionEnabled] = useState(false);
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const savedPreference = window.localStorage.getItem("felipe-os-motion");
+    setMotionEnabled(savedPreference ? savedPreference === "on" : !prefersReduced);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("felipe-os-motion", motionEnabled ? "on" : "off");
+  }, [motionEnabled]);
+
+  useEffect(() => {
+    const alreadyBooted = window.sessionStorage.getItem("felipe-os-booted") === "true";
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (alreadyBooted) {
+      setBootVisible(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      window.sessionStorage.setItem("felipe-os-booted", "true");
+      setBootVisible(false);
+    }, prefersReduced ? 300 : 1450);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     function openCommand(event: KeyboardEvent) {
@@ -203,22 +240,23 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[var(--fos-bg)] text-[var(--fos-text)]" data-felipe-theme={theme}>
+    <main className="relative min-h-screen overflow-hidden bg-[var(--fos-bg)] text-[var(--fos-text)]">
       <DesktopBackground motionEnabled={motionEnabled} />
       <TopMenuBar
         activeView={activeView}
+        guideHidden={guideHidden}
         motionEnabled={motionEnabled}
         onCommandOpen={() => setActiveView("hey-felipe")}
+        onGuideToggle={() => setGuideHidden((current) => !current)}
         onMotionToggle={() => setMotionEnabled((current) => !current)}
-        onThemeToggle={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
         onViewChange={setActiveView}
-        theme={theme}
       />
       <DesktopShell
         activeCaseId={activeCaseId}
         activeSystemId={activeSystemId}
         activeView={activeView}
         focusMode={focusMode}
+        guideHidden={guideHidden}
         motionEnabled={motionEnabled}
         onActiveCaseChange={setActiveCaseId}
         onActiveSystemChange={setActiveSystemId}
@@ -227,6 +265,34 @@ export default function FelipeOSWorkspace({ publicCV }: { publicCV: PublicCVData
         onViewChange={setActiveView}
         publicCV={publicCV}
       />
+      <GuidePanel
+        activeView={activeView}
+        bookingHref={BOOKING_HREF}
+        bookingTarget={BOOKING_TARGET}
+        hidden={guideHidden || focusMode}
+        motionEnabled={motionEnabled}
+        onHiddenChange={setGuideHidden}
+        onViewChange={setActiveView}
+      />
+      <AnimatePresence>
+        {bootVisible ? (
+          <motion.div
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[80] grid place-items-center bg-[#05050b]"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 1 }}
+            transition={{ duration: 0.32 }}
+          >
+            <div className="grid place-items-center gap-4">
+              <AnimatedFelipeOSLogo reducedMotion={!motionEnabled} size={96} variant="boot" />
+              <div className="text-center">
+                <p className="text-xl font-semibold text-white">Felipe OS</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-cyan-100/55">AI product operating layer</p>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </main>
   );
 }
@@ -268,20 +334,20 @@ function DesktopBackground({ motionEnabled }: { motionEnabled: boolean }) {
 
 function TopMenuBar({
   activeView,
+  guideHidden,
   motionEnabled,
   onCommandOpen,
+  onGuideToggle,
   onMotionToggle,
-  onThemeToggle,
   onViewChange,
-  theme,
 }: {
   activeView: FelipeOSView;
+  guideHidden: boolean;
   motionEnabled: boolean;
   onCommandOpen: () => void;
+  onGuideToggle: () => void;
   onMotionToggle: () => void;
-  onThemeToggle: () => void;
   onViewChange: (view: FelipeOSView) => void;
-  theme: "dark" | "light";
 }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[color:var(--fos-border)] bg-[var(--fos-surface)] px-3 py-1.5 shadow-[0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-2xl sm:px-5">
@@ -292,10 +358,13 @@ function TopMenuBar({
             onClick={() => onViewChange("command")}
             type="button"
           >
-            <FelipeOSWordmark />
+            <FelipeOSWordmark reducedMotion={!motionEnabled} />
           </button>
+          <span className="truncate rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs font-medium text-[var(--fos-muted)] md:hidden">
+            {viewMeta[activeView].title}
+          </span>
 
-          <nav aria-label="FelipeOS apps" className="hidden min-w-0 gap-1 overflow-x-auto lg:flex">
+          <nav aria-label="Felipe OS apps" className="hidden min-w-0 gap-1 overflow-x-auto lg:flex">
             {navItems.map((item) => (
               <button
                 aria-current={activeView === item.id ? "page" : undefined}
@@ -321,28 +390,29 @@ function TopMenuBar({
         </div>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
-          <span className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 sm:flex">
+          <span className="hidden items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100 xl:flex">
             <motion.span
               animate={motionEnabled ? { opacity: [0.45, 1, 0.45] } : { opacity: 1 }}
               className="h-1.5 w-1.5 rounded-full bg-[var(--fos-green)] shadow-[0_0_12px_rgba(52,211,153,0.55)]"
               transition={{ duration: 2, repeat: Infinity }}
             />
-            Available for builds & advisory
+            {STATUS_COPY}
           </span>
-          <span className="flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1.5 text-xs font-medium text-emerald-100 sm:hidden">
+          <span aria-label={STATUS_COPY} className="hidden h-8 w-8 place-items-center rounded-full border border-emerald-300/20 bg-emerald-300/10 md:grid xl:hidden">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--fos-green)]" />
-            Available
           </span>
           <button
-            aria-label="Toggle theme"
+            aria-label={guideHidden ? "Show guide panel" : "Hide guide panel"}
+            aria-pressed={!guideHidden}
             className="grid h-8 w-8 place-items-center rounded-full border border-[color:var(--fos-border)] bg-[var(--fos-surface-glass)] text-[var(--fos-muted)] outline-none transition hover:text-[var(--fos-text)] focus-visible:text-[var(--fos-text)]"
-            onClick={onThemeToggle}
+            onClick={onGuideToggle}
             type="button"
           >
-            {theme === "dark" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+            <PanelRightOpen className={`h-3.5 w-3.5 ${!guideHidden ? "text-[var(--fos-cyan)]" : ""}`} />
           </button>
           <button
             aria-label={motionEnabled ? "Reduce ambient motion" : "Enable ambient motion"}
+            aria-pressed={motionEnabled}
             className="grid h-8 w-8 place-items-center rounded-full border border-[color:var(--fos-border)] bg-[var(--fos-surface-glass)] text-[var(--fos-muted)] outline-none transition hover:text-[var(--fos-text)] focus-visible:text-[var(--fos-text)]"
             onClick={onMotionToggle}
             type="button"
@@ -374,6 +444,7 @@ function DesktopShell(props: {
   activeSystemId: SystemId;
   activeView: FelipeOSView;
   focusMode: boolean;
+  guideHidden: boolean;
   motionEnabled: boolean;
   onActiveCaseChange: (id: CaseStudyId) => void;
   onActiveSystemChange: (id: SystemId) => void;
@@ -383,24 +454,11 @@ function DesktopShell(props: {
   publicCV: PublicCVData;
 }) {
   return (
-    <div className={`relative z-10 flex min-h-screen flex-col px-3 pb-24 pt-14 sm:px-5 lg:pl-8 ${props.focusMode ? "lg:pr-8" : "lg:pr-[23.5rem]"}`}>
-      {!props.focusMode ? (
-        <>
-          <DashboardWidgetStack
-            activeCaseId={props.activeCaseId}
-            activeView={props.activeView}
-            motionEnabled={props.motionEnabled}
-            onViewChange={props.onViewChange}
-            publicCV={props.publicCV}
-          />
-          <MobileWidgetStrip
-            activeCaseId={props.activeCaseId}
-            activeView={props.activeView}
-            publicCV={props.publicCV}
-          />
-        </>
-      ) : null}
-
+    <div
+      className={`relative z-10 flex min-h-screen flex-col px-3 pb-24 pt-14 sm:px-5 lg:pl-8 ${
+        props.focusMode || props.guideHidden ? "lg:pr-8" : "lg:pr-[23.5rem]"
+      }`}
+    >
       <MainAppWindow
         activeCaseId={props.activeCaseId}
         activeSystemId={props.activeSystemId}
@@ -416,7 +474,7 @@ function DesktopShell(props: {
         publicCV={props.publicCV}
       />
 
-      {!props.focusMode ? <BottomDock activeView={props.activeView} onViewChange={props.onViewChange} /> : null}
+      {!props.focusMode ? <BottomDock activeView={props.activeView} motionEnabled={props.motionEnabled} onViewChange={props.onViewChange} /> : null}
     </div>
   );
 }
@@ -615,7 +673,7 @@ function DashboardWidgetStack({
             transition={{ duration: 2.2, repeat: Infinity }}
           />
         </div>
-        <h2 className="mt-3 text-xl font-semibold text-[var(--fos-text)]">Open for builds</h2>
+        <h2 className="mt-3 text-xl font-semibold text-[var(--fos-text)]">{STATUS_COPY}</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--fos-muted)]">Product / Growth / AI systems</p>
         <p className="text-sm text-[var(--fos-muted)]">Paris / Remote</p>
         <button
@@ -739,9 +797,17 @@ function MiniSparkline({ motionEnabled }: { motionEnabled: boolean }) {
   );
 }
 
-function BottomDock({ activeView, onViewChange }: { activeView: FelipeOSView; onViewChange: (view: FelipeOSView) => void }) {
+function BottomDock({
+  activeView,
+  motionEnabled,
+  onViewChange,
+}: {
+  activeView: FelipeOSView;
+  motionEnabled: boolean;
+  onViewChange: (view: FelipeOSView) => void;
+}) {
   return (
-    <nav aria-label="FelipeOS dock" className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3 pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="Felipe OS dock" className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3 pb-[env(safe-area-inset-bottom)]">
       <div className="flex max-w-full gap-2 overflow-x-auto rounded-[28px] border border-[color:var(--fos-border)] bg-[var(--fos-surface)] p-2 shadow-[0_18px_70px_rgba(0,0,0,0.45)] backdrop-blur-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {dockItems.map((item) => {
           const active = activeView === item.id;
@@ -760,7 +826,7 @@ function BottomDock({ activeView, onViewChange }: { activeView: FelipeOSView; on
               type="button"
             >
               <span className="grid h-8 w-8 flex-none place-items-center rounded-2xl bg-white/[0.07] text-[var(--fos-text)]">
-                {item.id === "command" ? <FelipeOSLogo size={24} /> : <Icon className="h-4 w-4" />}
+                {item.id === "command" ? <AnimatedFelipeOSLogo reducedMotion={!motionEnabled} size={24} variant="dock" /> : <Icon className="h-4 w-4" />}
               </span>
               <span className="pointer-events-none absolute -top-9 hidden whitespace-nowrap rounded-full border border-[color:var(--fos-border)] bg-[var(--fos-surface)] px-2.5 py-1 text-xs font-semibold text-[var(--fos-text)] shadow-[0_10px_28px_rgba(0,0,0,0.28)] group-hover:block max-sm:hidden">
                 {item.label}
@@ -804,14 +870,22 @@ function CommandCenterApp({
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
+          <a
+            className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+            href={BOOKING_HREF}
+            rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+            target={BOOKING_TARGET}
+          >
+            Book a 30-min call
+          </a>
           <button className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" onClick={() => onViewChange("services")} type="button">
-            Explore services →
+            Explore services
           </button>
           <button className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50" onClick={() => onViewChange("case-studies")} type="button">
-            See proof of work →
+            See proof of work
           </button>
           <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
-            Open Hey Felipe →
+            Open Hey Felipe
           </button>
         </div>
       </section>
@@ -846,7 +920,7 @@ function SystemNetworkMap({
           <div className="sm:col-span-2">
             <div className="mx-auto grid h-28 w-28 place-items-center rounded-full border border-cyan-300/25 bg-cyan-300/10 text-center shadow-[0_0_42px_rgba(34,211,238,0.14)]">
               <div>
-                <p className="text-sm font-semibold text-white">FelipeOS</p>
+                <p className="text-sm font-semibold text-white">Felipe OS</p>
                 <p className="text-[0.68rem] text-cyan-100/70">operating layer</p>
               </div>
             </div>
@@ -870,14 +944,47 @@ function SystemNetworkMap({
 }
 
 function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
+  const [selectedService, setSelectedService] = useState(services[0]?.title || "AI Workflow Sprint");
+  const [selectedProblem, setSelectedProblem] = useState("Automate repetitive work");
+  const [selectedTimeline, setSelectedTimeline] = useState("This month");
+  const problemTypes = [
+    "Automate repetitive work",
+    "Build an AI assistant",
+    "Improve paid growth / CAC",
+    "Build a dashboard or internal tool",
+    "Create an MVP",
+    "Other",
+  ];
+  const timelineOptions = ["ASAP", "This month", "This quarter", "Exploring"];
+
   return (
     <div className="grid gap-5">
-      <section className="rounded-[22px] border border-white/10 bg-white/[0.035] p-5">
+      <section className="grid gap-5 rounded-[22px] border border-white/10 bg-white/[0.035] p-5 lg:grid-cols-[0.95fr_1.05fr]">
+        <div>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Commercial apps</p>
-        <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">What clients can buy.</h2>
+          <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Start with the system worth shipping.</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-          Practical, scoped builds for teams that want AI embedded in real operations, growth infrastructure, dashboards, and product delivery.
+            Practical, scoped builds for teams that want AI embedded in real operations, growth infrastructure, dashboards and product delivery.
         </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a
+              className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+              href={BOOKING_HREF}
+              rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+              target={BOOKING_TARGET}
+            >
+              Book a 30-min discovery call
+            </a>
+            <button
+              className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35"
+              onClick={onOpenHeyFelipe}
+              type="button"
+            >
+              Open Hey Felipe
+            </button>
+          </div>
+        </div>
+        <ServiceFunnelVisual selectedProblem={selectedProblem} selectedService={selectedService} selectedTimeline={selectedTimeline} />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -887,6 +994,10 @@ function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
             <h3 className="mt-2 text-2xl font-semibold text-white">{service.title}</h3>
             <p className="mt-3 text-sm leading-6 text-slate-300">{service.description}</p>
             <ServiceVisual title={service.title} />
+            <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.055] p-3">
+              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-cyan-100/55">Best for</p>
+              <p className="mt-2 text-sm leading-6 text-slate-200">{service.bestFor}</p>
+            </div>
             <p className="mt-4 text-xs uppercase tracking-[0.15em] text-cyan-100/50">Deliverables</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {service.deliverables.map((deliverable) => (
@@ -895,27 +1006,137 @@ function ServicesApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
                 </span>
               ))}
             </div>
-            <a className="mt-5 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}?subject=${encodeURIComponent(service.cta)}`}>
-              {service.cta} →
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <span className="text-[0.68rem] uppercase tracking-[0.14em] text-slate-500">Timeline</span>
+              <span className="text-sm font-semibold text-white">{service.timeline}</span>
+            </div>
+            <a
+              className="mt-5 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+              href={BOOKING_HREF}
+              rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+              target={BOOKING_TARGET}
+            >
+              {service.cta}
             </a>
           </article>
         ))}
       </div>
 
       <section className="rounded-[22px] border border-emerald-300/15 bg-emerald-300/[0.06] p-5">
-        <h3 className="text-xl font-semibold text-white">Have a messy workflow, growth problem or AI use case worth turning into a system?</h3>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <a className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}`}>
-            Email me →
-          </a>
-          <a className="rounded-full border border-white/15 bg-black/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-cyan-300/35" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
-            Connect on LinkedIn →
-          </a>
-          <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
-            Open Hey Felipe →
-          </button>
+        <div className="grid gap-5 xl:grid-cols-[0.78fr_1.22fr]">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-100/60">Start a project</p>
+            <h3 className="mt-3 text-2xl font-semibold text-white">Have a workflow, growth problem or AI use case worth turning into a system?</h3>
+            <p className="mt-3 text-sm leading-6 text-emerald-50/80">
+              Pick a 30-minute slot. I will use the call to understand your workflow, growth problem or product opportunity and suggest a practical next step.
+            </p>
+          </div>
+          <div className="grid gap-4">
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-emerald-100/60">1. Choose service</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {services.map((service) => (
+                  <button
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      selectedService === service.title
+                        ? "border-white/35 bg-white text-black"
+                        : "border-white/10 bg-black/20 text-emerald-50 hover:border-cyan-300/35"
+                    }`}
+                    key={service.title}
+                    onClick={() => setSelectedService(service.title)}
+                    type="button"
+                  >
+                    {service.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-emerald-100/60">2. Choose problem type</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {problemTypes.map((problem) => (
+                  <button
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      selectedProblem === problem
+                        ? "border-cyan-200/50 bg-cyan-300/15 text-cyan-50"
+                        : "border-white/10 bg-black/20 text-emerald-50 hover:border-cyan-300/35"
+                    }`}
+                    key={problem}
+                    onClick={() => setSelectedProblem(problem)}
+                    type="button"
+                  >
+                    {problem}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.15em] text-emerald-100/60">3. Choose timeline</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {timelineOptions.map((timeline) => (
+                  <button
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      selectedTimeline === timeline
+                        ? "border-purple-200/50 bg-purple-300/15 text-purple-50"
+                        : "border-white/10 bg-black/20 text-emerald-50 hover:border-purple-300/35"
+                    }`}
+                    key={timeline}
+                    onClick={() => setSelectedTimeline(timeline)}
+                    type="button"
+                  >
+                    {timeline}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <a
+              className="inline-flex w-fit rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+              href={BOOKING_HREF}
+              rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+              target={BOOKING_TARGET}
+            >
+              Book a 30-min discovery call
+            </a>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ServiceFunnelVisual({
+  selectedProblem,
+  selectedService,
+  selectedTimeline,
+}: {
+  selectedProblem: string;
+  selectedService: string;
+  selectedTimeline: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-black/30 p-4">
+      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Project route</p>
+        <span className="h-2 w-2 rounded-full bg-[var(--fos-green)] shadow-[0_0_14px_rgba(52,211,153,0.55)]" />
+      </div>
+      <div className="mt-4 grid gap-3">
+        {[
+          ["Service", selectedService],
+          ["Problem", selectedProblem],
+          ["Timeline", selectedTimeline],
+          ["Next", "30-min discovery call"],
+        ].map(([label, value], index) => (
+          <div className="grid grid-cols-[auto_1fr] items-center gap-3" key={label}>
+            <span className="grid h-8 w-8 place-items-center rounded-full border border-cyan-300/20 bg-cyan-300/10 text-xs font-semibold text-cyan-50">
+              {index + 1}
+            </span>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <p className="text-[0.64rem] uppercase tracking-[0.14em] text-slate-500">{label}</p>
+              <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1205,8 +1426,8 @@ function CVApp({ publicCV }: { publicCV: PublicCVData }) {
               <p key={line}>{line}</p>
             ))}
           </div>
-          <a className="mt-6 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href="/cv/felipe-mejia-public-cv.pdf">
-            Download CV →
+          <a className="mt-6 inline-flex rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" download href="/api/download/cv">
+            Download CV
           </a>
         </div>
 
@@ -1307,12 +1528,12 @@ function HeyFelipeApp({ onIntent }: { onIntent: (intent: RouteIntent) => void })
   const [messages, setMessages] = useState<Array<{ role: "user" | "felipe"; text: string }>>([
     {
       role: "felipe",
-      text: "Ask what I can build for your team, or open one of the FelipeOS apps.",
+      text: "Ask what I can build for your team, or open one of the Felipe OS apps.",
     },
   ]);
   const [input, setInput] = useState("");
   const suggestions = useMemo(
-    () => ["Show services", "Show proof of work", "Show systems", "Open CV", "Contact Felipe"],
+    () => ["Start a project", "Show services", "Show proof of work", "Open CV", "Book a call"],
     [],
   );
 
@@ -1354,6 +1575,14 @@ function HeyFelipeApp({ onIntent }: { onIntent: (intent: RouteIntent) => void })
             {action}
           </button>
         ))}
+        <a
+          className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50"
+          href={BOOKING_HREF}
+          rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+          target={BOOKING_TARGET}
+        >
+          Book a 30-min call
+        </a>
       </div>
 
       <form
@@ -1384,32 +1613,60 @@ function ContactApp({ onOpenHeyFelipe }: { onOpenHeyFelipe: () => void }) {
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-100/60">Contact</p>
         <h2 className="mt-4 text-3xl font-semibold text-white sm:text-5xl">Have a messy workflow, growth problem or AI use case worth turning into a system?</h2>
         <p className="mt-5 text-base leading-7 text-slate-300">
-          Send the context: the workflow, the tools, the bottleneck and the metric that would make the system worth building.
+          Pick a 30-minute slot. I will use the call to understand your workflow, growth problem or product opportunity and suggest a practical next step.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <a className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100" href={`mailto:${EMAIL}`}>
-            Email me →
+          <a
+            className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:bg-cyan-100"
+            href={BOOKING_HREF}
+            rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+            target={BOOKING_TARGET}
+          >
+            Book a 30-min discovery call
           </a>
-          <a className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
-            Connect on LinkedIn →
+          <a className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:-translate-y-0.5 hover:border-cyan-200/50" href={`mailto:${EMAIL}`}>
+            Email project context
           </a>
           <button className="rounded-full border border-purple-300/25 bg-purple-400/10 px-4 py-2.5 text-sm font-semibold text-purple-100 transition hover:-translate-y-0.5 hover:border-cyan-300/35" onClick={onOpenHeyFelipe} type="button">
-            Open Hey Felipe →
+            Open Hey Felipe
           </button>
+        </div>
+        <div className="mt-7 grid gap-3 sm:grid-cols-3">
+          {[
+            ["1", "Workflow", "Tools, bottlenecks and owner"],
+            ["2", "Metric", "Cost, speed, CAC or conversion"],
+            ["3", "Next step", "Sprint, audit or product build"],
+          ].map(([step, label, copy]) => (
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-3" key={step}>
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-black">{step}</span>
+              <p className="mt-3 text-sm font-semibold text-white">{label}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">{copy}</p>
+            </div>
+          ))}
         </div>
       </section>
       <section className="grid content-start gap-3 rounded-[22px] border border-white/10 bg-black/30 p-5 sm:p-7">
+        <a
+          className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.08] p-4 text-white transition hover:-translate-y-0.5 hover:border-emerald-200/40"
+          href={BOOKING_HREF}
+          rel={BOOKING_TARGET ? "noopener noreferrer" : undefined}
+          target={BOOKING_TARGET}
+        >
+          <span className="block text-xs uppercase tracking-[0.16em] text-emerald-100/65">Calendar</span>
+          <span className="mt-1 block text-lg font-semibold">Book a 30-minute slot</span>
+          <span className="mt-2 block text-sm leading-6 text-emerald-50/75">Monday-Friday, 9am-5pm Europe/Paris.</span>
+        </a>
         <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10" href={`mailto:${EMAIL}`}>
           <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">Email</span>
-          <span className="mt-1 block text-lg font-semibold">{EMAIL} →</span>
+          <span className="mt-1 block text-lg font-semibold">{EMAIL}</span>
         </a>
         <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-purple-300/30 hover:bg-purple-400/10" href={LINKEDIN} rel="noopener noreferrer" target="_blank">
           <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">LinkedIn</span>
-          <span className="mt-1 block text-lg font-semibold">felipemejiaosorio →</span>
+          <span className="mt-1 block text-lg font-semibold">felipemejiaosorio</span>
         </a>
         <a className="rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-white transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-300/10" href={GITHUB} rel="noopener noreferrer" target="_blank">
           <span className="block text-xs uppercase tracking-[0.16em] text-slate-400">GitHub</span>
-          <span className="mt-1 block text-lg font-semibold">github.com/afmo91 →</span>
+          <span className="mt-1 block text-lg font-semibold">github.com/afmo91</span>
         </a>
       </section>
     </div>

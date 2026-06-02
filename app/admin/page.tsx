@@ -113,7 +113,7 @@ export default async function AdminPage() {
               Edit the visible public CV, keep tailored application versions aligned with it, and download generated PDFs when available.
             </p>
           </div>
-          <a className="button-secondary w-fit" href="/cv/felipe-mejia-public-cv.pdf">
+          <a className="button-secondary w-fit" download href="/api/download/cv">
             Download public PDF
           </a>
         </div>

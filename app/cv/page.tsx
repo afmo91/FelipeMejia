@@ -24,10 +24,10 @@ export default function PublicCVPage() {
               ))}
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a className="button-primary inline-flex" href="/cv/felipe-mejia-public-cv.pdf">
+              <a className="button-primary inline-flex" download href="/api/download/cv">
                 Download CV
               </a>
-              <Link className="button-secondary inline-flex" href="/#contact">
+              <Link className="button-secondary inline-flex" href="/contact">
                 Contact Felipe
               </Link>
             </div>

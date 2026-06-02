@@ -62,75 +62,121 @@ function combineCV(base, tweak) {
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: "#09090f",
-    color: "#f7f7fb",
+    backgroundColor: "#ffffff",
+    color: "#111827",
     fontFamily: "Helvetica",
-    fontSize: 10,
-    lineHeight: 1.45,
-    padding: 36,
+    fontSize: 9.25,
+    lineHeight: 1.34,
+    paddingBottom: 34,
+    paddingHorizontal: 38,
+    paddingTop: 34,
   },
   header: {
-    borderBottomColor: "#8b5cf6",
-    borderBottomWidth: 1.5,
-    marginBottom: 18,
-    paddingBottom: 14,
+    borderBottomColor: "#d1d5db",
+    borderBottomWidth: 1,
+    marginBottom: 12,
+    paddingBottom: 10,
   },
   name: {
-    fontSize: 24,
+    color: "#111827",
+    fontSize: 22,
     fontWeight: 700,
     letterSpacing: 0,
   },
   title: {
-    color: "#a78bfa",
-    fontSize: 12,
-    marginTop: 5,
+    color: "#374151",
+    fontSize: 11,
+    marginTop: 4,
   },
   contact: {
-    color: "#cbd5e1",
-    fontSize: 8.5,
-    marginTop: 8,
+    color: "#4b5563",
+    fontSize: 8,
+    marginTop: 6,
   },
   section: {
-    marginTop: 14,
+    marginTop: 9,
   },
   sectionTitle: {
-    color: "#67e8f9",
-    fontSize: 12,
+    borderBottomColor: "#e5e7eb",
+    borderBottomWidth: 0.75,
+    color: "#111827",
+    fontSize: 9.75,
     fontWeight: 700,
-    marginBottom: 6,
+    letterSpacing: 0.7,
+    marginBottom: 5,
+    paddingBottom: 2.5,
     textTransform: "uppercase",
   },
   summaryLine: {
-    color: "#e5e7eb",
-    marginBottom: 3,
+    color: "#1f2937",
+    marginBottom: 2,
+  },
+  roleBlock: {
+    marginBottom: 8,
+  },
+  roleHeader: {
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
   },
   role: {
-    fontSize: 12,
+    color: "#111827",
+    fontSize: 10.25,
     fontWeight: 700,
-    marginBottom: 3,
+    marginBottom: 2,
+    maxWidth: "68%",
   },
   metric: {
-    color: "#c4b5fd",
-    fontSize: 8.5,
-    marginBottom: 5,
-  },
-  bullet: {
-    color: "#e5e7eb",
+    color: "#4b5563",
+    fontSize: 7.6,
     marginBottom: 3,
   },
+  metricRight: {
+    color: "#4b5563",
+    fontSize: 7.4,
+    maxWidth: "30%",
+    textAlign: "right",
+  },
+  bulletRow: {
+    flexDirection: "row",
+    gap: 5,
+    marginBottom: 2,
+  },
+  bulletMarker: {
+    color: "#111827",
+    fontSize: 8,
+    width: 6,
+  },
+  bullet: {
+    color: "#1f2937",
+    flex: 1,
+  },
   skillGroup: {
-    marginBottom: 5,
+    marginBottom: 3.5,
   },
   skillTitle: {
-    color: "#f7f7fb",
+    color: "#111827",
     fontWeight: 700,
   },
   skillText: {
-    color: "#cbd5e1",
+    color: "#1f2937",
+  },
+  compactText: {
+    color: "#1f2937",
+    marginBottom: 2,
+  },
+  columns: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  column: {
+    flex: 1,
   },
 });
 
 function CVDocument({ cv }) {
+  const education = cv.education?.length ? cv.education : ["Details available on request."];
+
   return React.createElement(
     Document,
     null,
@@ -161,26 +207,69 @@ function CVDocument({ cv }) {
         cv.experience.map((item) =>
           React.createElement(
             View,
-            { key: item.company, style: { marginBottom: 10 } },
-            React.createElement(Text, { style: styles.role }, `${item.company} — ${item.role}`),
-            React.createElement(Text, { style: styles.metric }, item.metrics.join("  |  ")),
-            item.bullets.map((bullet) => React.createElement(Text, { key: bullet, style: styles.bullet }, `• ${bullet}`)),
+            { key: item.company, style: styles.roleBlock },
+            React.createElement(
+              View,
+              { style: styles.roleHeader },
+              React.createElement(Text, { style: styles.role }, `${item.company} - ${item.role}`),
+              React.createElement(Text, { style: styles.metricRight }, item.metrics.slice(0, 3).join(" | ")),
+            ),
+            item.metrics.length > 3
+              ? React.createElement(Text, { style: styles.metric }, item.metrics.slice(3).join(" | "))
+              : null,
+            item.bullets.map((bullet) =>
+              React.createElement(
+                View,
+                { key: bullet, style: styles.bulletRow },
+                React.createElement(Text, { style: styles.bulletMarker }, "-"),
+                React.createElement(Text, { style: styles.bullet }, bullet),
+              ),
+            ),
           ),
         ),
       ),
       React.createElement(
         View,
         { style: styles.section },
-        React.createElement(Text, { style: styles.sectionTitle }, "Core Skills"),
-        Object.entries(cv.skills).map(([group, values]) =>
+        React.createElement(Text, { style: styles.sectionTitle }, "Selected Achievements"),
+        (cv.selectedAchievements || []).map((achievement) =>
           React.createElement(
             View,
-            { key: group, style: styles.skillGroup },
-            React.createElement(Text, { style: styles.skillText },
-              React.createElement(Text, { style: styles.skillTitle }, `${group}: `),
-              values.join(", "),
+            { key: achievement, style: styles.bulletRow },
+            React.createElement(Text, { style: styles.bulletMarker }, "-"),
+            React.createElement(Text, { style: styles.bullet }, achievement),
+          ),
+        ),
+      ),
+      React.createElement(
+        View,
+        { style: [styles.section, styles.columns] },
+        React.createElement(
+          View,
+          { style: styles.column },
+          React.createElement(Text, { style: styles.sectionTitle }, "Skills"),
+          Object.entries(cv.skills).map(([group, values]) =>
+            React.createElement(
+              View,
+              { key: group, style: styles.skillGroup },
+              React.createElement(Text, { style: styles.skillText },
+                React.createElement(Text, { style: styles.skillTitle }, `${group}: `),
+                values.join(", "),
+              ),
             ),
           ),
+        ),
+        React.createElement(
+          View,
+          { style: styles.column },
+          React.createElement(Text, { style: styles.sectionTitle }, "Tools"),
+          React.createElement(Text, { style: styles.compactText }, (cv.tools || []).join(", ")),
+          React.createElement(View, { style: { marginTop: 7 } }),
+          React.createElement(Text, { style: styles.sectionTitle }, "Languages"),
+          (cv.languages || []).map((language) => React.createElement(Text, { key: language, style: styles.compactText }, language)),
+          React.createElement(View, { style: { marginTop: 7 } }),
+          React.createElement(Text, { style: styles.sectionTitle }, "Education"),
+          education.map((item) => React.createElement(Text, { key: item, style: styles.compactText }, item)),
         ),
       ),
     ),

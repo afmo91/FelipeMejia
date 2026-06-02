@@ -3,6 +3,9 @@ import { getBaseCV } from "@/lib/cv";
 
 export default function ContactSection() {
   const { contact } = getBaseCV();
+  const bookingUrl = process.env.NEXT_PUBLIC_BOOKING_URL?.trim();
+  const bookingHref =
+    bookingUrl || `mailto:${contact.email}?subject=${encodeURIComponent("Felipe OS discovery call")}`;
 
   return (
     <section className="section scroll-mt-24" id="contact">
@@ -17,6 +20,14 @@ export default function ContactSection() {
             <p className="mt-6 text-sm text-gray-400">
               Prefer email? The direct link stays in the footer: {contact.email}.
             </p>
+            <a
+              className="button-primary mt-7 inline-flex"
+              href={bookingHref}
+              rel={bookingUrl ? "noopener noreferrer" : undefined}
+              target={bookingUrl ? "_blank" : undefined}
+            >
+              Book a 30-min discovery call
+            </a>
           </div>
 
           <div className="contact-panel">

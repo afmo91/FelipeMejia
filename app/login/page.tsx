@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Sign in to access the private FelipeOS admin workspace.",
+  description: "Sign in to access the private Felipe OS admin workspace.",
 };
 
 export default function LoginPage() {

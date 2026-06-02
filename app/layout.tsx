@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import LayoutShell from "@/components/LayoutShell";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import CookieConsent from "@/components/CookieConsent";
 import { getBaseCV } from "@/lib/cv";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://felipemejia.com";
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Felipe Mejia | AI Product & Growth Consultant",
-    template: "%s | Felipe Mejia",
+    default: "Felipe OS | AI Product & Growth Systems",
+    template: "%s | Felipe OS",
   },
   description:
     "Felipe Mejia is an AI product and growth consultant helping SaaS, telecom, and digital teams build agentic workflows, ship 0 to 1 products, instrument analytics systems, and create measurable growth loops.",
@@ -33,8 +34,8 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "AI product and growth support for agentic workflows, experimentation, analytics, PLG, and digital onboarding.",
-    siteName: "Felipe Mejia",
-    title: "Felipe Mejia | AI Product & Growth Consultant",
+    siteName: "Felipe OS",
+    title: "Felipe OS | AI Product & Growth Systems",
     type: "website",
     url: siteUrl,
   },
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     description:
       "AI product and growth support for agentic workflows, experimentation, analytics, PLG, and digital onboarding.",
-    title: "Felipe Mejia | AI Product & Growth Consultant",
+    title: "Felipe OS | AI Product & Growth Systems",
   },
 };
 
@@ -65,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {
         "@type": "ProfessionalService",
         email: contact.email,
-        name: "Felipe Mejia Product & Growth Consulting",
+        name: "Felipe OS",
         sameAs: [contact.linkedin.url, contact.github.url],
         url: siteUrl,
         areaServed: "Global",
@@ -90,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       },
       {
         "@type": "WebSite",
-        name: "Felipe Mejia",
+        name: "Felipe OS",
         url: siteUrl,
       },
     ],
@@ -106,6 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LayoutShell header={<SiteHeader />} footer={<SiteFooter />}>
           {children}
         </LayoutShell>
+        <CookieConsent />
       </body>
     </html>
   );

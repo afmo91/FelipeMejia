@@ -36,6 +36,7 @@ export type BaseCV = {
   skills: Record<string, string[]>;
   tools?: string[];
   languages?: string[];
+  education?: string[];
 };
 
 export type CVTweak = {
